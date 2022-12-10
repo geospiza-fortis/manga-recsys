@@ -18,4 +18,6 @@ If we do need to scrape this from scratch, we filter using the `createdAtSince` 
 ```bash
 # -a limit=10 for testing
 scrapy runspider manga_recsys/scrapy/mangadex.py -a path=data/raw/2022-12-10-mangadex-uuid.csv -o data/raw/2022-12-10-mangadex-manga.ndjson -t jsonlines
+
+python scripts/estimate_scrape_time.py 65737 data/raw/2022-12-10-mangadex-manga.ndjson --polling-interval 5 --model-interval 15
 ```

@@ -11,9 +11,10 @@ class MangaSpider(scrapy.Spider):
     custom_settings = {
         "AUTOTHROTTLE_ENABLED": True,
         "AUTOTHROTTLE_START_DELAY": 1,
-        "AUTOTHROTTLE_TARGET_CONCURRENCY": 4,
-        "DOWNLOAD_DELAY": 1,
+        "AUTOTHROTTLE_TARGET_CONCURRENCY": 5,
+        "DOWNLOAD_DELAY": 1 / 5,
         "LOG_LEVEL": "WARNING",
+        "RANDOMIZE_DOWNLOAD_DELAY": False,
     }
 
     def __init__(self, path, limit=None, **kwargs):
