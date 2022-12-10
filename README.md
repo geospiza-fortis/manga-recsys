@@ -21,3 +21,16 @@ scrapy runspider manga_recsys/scrapy/mangadex.py -a path=data/raw/2022-12-10-man
 
 python scripts/estimate_scrape_time.py 65737 data/raw/2022-12-10-mangadex-manga.ndjson --polling-interval 5 --model-interval 15
 ```
+
+### preprocessing
+
+```bash
+python -m manga_recsys.commands.manga_parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
+```
+
+### storage
+
+```bash
+gcloud --project geospiza storage buckets create gs://manga-recsys
+gsutil -m rsync -r data/ gs://manga-recsys/data/
+```
