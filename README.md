@@ -1,4 +1,4 @@
-# mangadex recommendation
+# manga-recsys recommendation
 
 This is a project to build a semi-useful recommendation from mangadex's API.
 There are other projects out there; this one is primarily for learning and fun.
