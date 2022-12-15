@@ -4,8 +4,15 @@
   $: assoc_rules = data.assoc_rules;
   let options = {
     autoColumns: true,
+    autoColumnsDefinitions: [
+      { field: "antecedent", headerFilter: true },
+      { field: "consequent", headerFilter: true },
+    ],
+    initialSort: [
+      { column: "confidence", dir: "desc" },
+    ],
     pagination: true,
-    paginationSize: 20
+    paginationSize: 20,
   }
 </script>
 
