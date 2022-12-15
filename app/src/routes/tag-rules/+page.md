@@ -9,7 +9,7 @@
       { field: "consequent", headerFilter: true },
     ],
     initialSort: [
-      { column: "confidence", dir: "desc" },
+      { column: "lift", dir: "desc" },
     ],
     pagination: true,
     paginationSize: 20,
