@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "manga-recsys"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["geospiza <geospiza@protonmail.com>"]
 readme = "README.md"
-packages = [{include = "manga_recsys"}]
+packages = [{ include = "manga_recsys" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -16,11 +16,14 @@ scikit-learn = "^1.2.0"
 pyspark = "^3.3.1"
 matplotlib = "^3.6.2"
 
-
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.5.1"
-black = {version = "^22.12.0", allow-prereleases = true}
+black = { version = "^22.12.0", allow-prereleases = true }
 nb-black = "^1.0.7"
+
+[tool.poetry.scripts]
+manga-parquet = "manga_recsys.commands.manga_parquet:main"
+tag-rules = "manga_recsys.commands.tag_rules:main"
 
 [build-system]
 requires = ["poetry-core"]

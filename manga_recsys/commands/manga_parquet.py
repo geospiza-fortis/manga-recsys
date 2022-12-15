@@ -1,9 +1,8 @@
-import os
-import sys
 from argparse import ArgumentParser
 
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+
+from manga_recsys.spark import get_spark
 
 
 def convert_via_json(col, type):
@@ -35,16 +34,8 @@ def parse_args():
 
 
 def main():
-    os.environ["PYSPARK_PYTHON"] = sys.executable
-    os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
     args = parse_args()
-    spark = (
-        SparkSession.builder.config("spark.driver.memory", args.memory)
-        .config("spark.driver.cores", args.cores)
-        .config("spark.sql.shuffle.partitions", args.cores * 2)
-        .config("spark.sql.execution.arrow.pyspark.enabled", "true")
-        .getOrCreate()
-    )
+    spark = get_spark(cores=args.cores, memory=args.memory)
 
     raw = spark.read.text(args.input)
     df = spark.read.json(raw.rdd.map(lambda r: r.value)).repartition(args.cores * 2)

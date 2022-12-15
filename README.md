@@ -25,12 +25,16 @@ python scripts/estimate_scrape_time.py 65737 data/raw/2022-12-10-mangadex-manga.
 ### preprocessing
 
 ```bash
-python -m manga_recsys.commands.manga_parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
+manga-parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
+
+tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules/
 ```
+
+````
 
 ### storage
 
 ```bash
 gcloud --project geospiza storage buckets create gs://manga-recsys
 gsutil -m rsync -r data/ gs://manga-recsys/data/
-```
+````
