@@ -17,5 +17,8 @@
     "svelte": "^3.54.0",
     "vite": "^4.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "tabulator-tables": "^5.4.3"
+  }
 }

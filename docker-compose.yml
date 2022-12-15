@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  nginx:
+    image: nginx:stable
+    volumes:
+      - ./data/:/app/data:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "4000:4000"
+  app:
+    build:
+      context: app
+    command: npm run dev -- --host
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - nginx
+    environment:
+      - VITE_STATIC_HOST=http://nginx:4000
