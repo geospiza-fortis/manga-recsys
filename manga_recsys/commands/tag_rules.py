@@ -55,12 +55,15 @@ def main():
     )
     fpm = fp.fit(collected_tags)
 
-    # write out two parquet files using pandas
+    # write out parquet and json files (records) for each
     Path(args.output).mkdir(parents=True, exist_ok=True)
-    fpm.freqItemsets.toPandas().to_parquet(f"{args.output}/freq_itemsets.parquet")
-    fpm.associationRules.toPandas().to_parquet(
-        f"{args.output}/association_rules.parquet"
-    )
+    freq_df = fpm.freqItemsets.toPandas()
+    freq_df.to_parquet(f"{args.output}/freq_itemsets.parquet")
+    freq_df.to_json(f"{args.output}/freq_itemsets.json", orient="records")
+
+    assoc_df = fpm.associationRules.toPandas()
+    assoc_df.to_parquet(f"{args.output}/association_rules.parquet")
+    assoc_df.to_json(f"{args.output}/association_rules.json", orient="records")
 
 
 if __name__ == "__main__":
