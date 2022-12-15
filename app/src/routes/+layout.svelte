@@ -2,7 +2,7 @@
   <nav>
     <div>
       <a href="/">home</a>
-      <a href="/tag-rules">tag-rules</a>
+      <a href="/tag-rules">tag rules</a>
     </div>
   </nav>
   <slot />
