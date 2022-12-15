@@ -6,4 +6,4 @@
 
 <h1>tag rules</h1>
 
-<Table data={assoc_rules} options={{ autoColumns: true }} />
+<Table data={assoc_rules} options={{ autoColumns: true, pagination: true, paginationSize: 20 }} />
