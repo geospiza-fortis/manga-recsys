@@ -5,4 +5,7 @@ COPY package* ./
 RUN npm install
 
 COPY . ./
-CMD npm run dev
+
+ENV PORT=${PORT:-8000}
+RUN npm run build
+CMD npm run preview -- --host --port ${PORT}

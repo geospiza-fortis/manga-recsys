@@ -12,13 +12,14 @@ services:
   app:
     build:
       context: app
-    command: npm run dev -- --host
     volumes:
       - ./app:/app
       - node_modules:/app/node_modules
+    command: npm run dev -- --host --port ${PORT}
     ports:
       - "5173:5173"
     depends_on:
       - nginx
     environment:
       - VITE_STATIC_HOST=http://nginx:4000
+      - PORT=5173
