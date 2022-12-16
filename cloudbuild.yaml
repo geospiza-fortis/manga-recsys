@@ -12,6 +12,8 @@ steps:
         "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
         "app",
       ]
+    env:
+      - VITE_STATIC_HOST=$VITE_STATIC_HOST
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME:latest"]
   - name: "gcr.io/cloud-builders/gcloud"

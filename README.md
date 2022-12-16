@@ -35,6 +35,6 @@ tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-1
 ### storage
 
 ```bash
-gcloud --project geospiza storage buckets create gs://manga-recsys
+gcloud --project manga-recsys storage buckets create gs://manga-recsys
 gsutil -m rsync -r data/ gs://manga-recsys/data/
 ````

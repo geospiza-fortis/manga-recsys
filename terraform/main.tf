@@ -29,7 +29,7 @@ provider "google" {
 data "google_project" "project" {}
 
 resource "google_storage_bucket" "default" {
-  name                        = "${local.repo_name}-static"
+  name                        = local.repo_name
   location                    = "US"
   uniform_bucket_level_access = true
   cors {
@@ -38,6 +38,12 @@ resource "google_storage_bucket" "default" {
     response_header = ["*"]
     max_age_seconds = 3600
   }
+}
+
+resource "google_storage_bucket_iam_member" "default-public" {
+  bucket = google_storage_bucket.default.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
 }
 
 
@@ -76,7 +82,7 @@ resource "google_cloudbuild_trigger" "github" {
     }
   }
   substitutions = {
-    _REGION = local.region
+    _VITE_STATIC_HOST = "https://storage.googleapis.com/${google_storage_bucket.default.name}"
   }
   filename        = "cloudbuild.yaml"
   service_account = google_service_account.cloudbuild.id
@@ -98,10 +104,6 @@ resource "google_cloud_run_v2_service" "default" {
     }
     containers {
       image = "gcr.io/${local.project_id}/${local.repo_name}:latest"
-      env {
-        name  = "VITE_STATIC_HOST"
-        value = "https://storage.googleapis.com/${google_storage_bucket.default.name}"
-      }
     }
   }
 
