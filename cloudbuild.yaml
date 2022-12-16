@@ -10,7 +10,7 @@ steps:
         "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
         "--cache-from",
         "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
-        ".",
+        "app",
       ]
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME:latest"]
