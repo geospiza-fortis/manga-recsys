@@ -8,7 +8,7 @@ steps:
         "build",
         "-t",
         "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
-        "-e",
+        "--build-arg",
         "VITE_STATIC_HOST=${_VITE_STATIC_HOST}",
         "--cache-from",
         "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
