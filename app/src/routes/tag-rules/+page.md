@@ -30,7 +30,7 @@ We also note relevant terminology sourced from [Wikipedia] below.
 
 ### support
 
-Support is an indicator of frequency of a set of tags.
+Support is how often an itemset of tags is present in the dataset.
 
 $$
 supp(X) = \frac{|(i, t) \in T: X \subseteq t|}{|T|}
@@ -55,7 +55,7 @@ When lift is greater than 1, then the sets are dependent.
 When lift is less than 1, then the sets are independent.
 
 $$
-lift(X \rightarrow Y) = \frac{conf(X \cap Y)}{supp(X) \times supp(Y)}
+lift(X \rightarrow Y) = \frac{supp(X \cap Y)}{supp(X) \times supp(Y)}
 $$
 
 [wikipedia]: https://en.wikipedia.org/wiki/Association_rule_learning
