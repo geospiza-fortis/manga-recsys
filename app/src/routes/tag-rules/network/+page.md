@@ -1,7 +1,14 @@
 <script>
-    import GephiNetwork from "$lib/GephiNetwork.svelte";
+    import { onMount } from "svelte";
     export let data;
-    $: gephi_assoc = data.gephi_assoc;
+    let GephiNetwork;
+    let gephi_assoc;
+
+    onMount(async () => {
+        GephiNetwork = (await import("$lib/GephiNetwork.svelte")).default;
+        gephi_assoc = data.gephi_assoc;
+    })
+
     const options = {
         autoResize: true,
         layout: {
@@ -22,9 +29,7 @@
 
 A network visualization of the [tag rules](/tag-rules) data.
 
-{#if gephi_assoc }
-<GephiNetwork data={gephi_assoc} {options} selectedNode={"Isekai"} />
-{/if}
+<svelte:component this={GephiNetwork} data={gephi_assoc} {options} selectedNode={"Isekai"} />
 
 ## notes
 

@@ -1,6 +1,6 @@
 <script>
-  import { networkGephiParser } from "vis-network/standalone";
   import Network from "./Network.svelte";
+  import { networkGephiParser } from "vis-network/standalone";
   import { browser } from "$app/environment";
 
   export let data = null;
