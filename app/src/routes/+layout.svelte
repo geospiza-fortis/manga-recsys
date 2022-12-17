@@ -3,6 +3,7 @@
     <div>
       <a href="/">home</a>
       <a href="/tag-rules">tag rules</a>
+      <a href="/data">data</a>
     </div>
   </nav>
   <slot />
