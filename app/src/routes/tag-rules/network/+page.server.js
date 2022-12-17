@@ -1,6 +1,5 @@
-const base_url = import.meta.env.VITE_STATIC_HOST;
-
 async function tag_rule_data(suffix) {
+  const base_url = import.meta.env.VITE_STATIC_HOST;
   let url = `${base_url}/data/processed/2022-12-14-tag-rules/${suffix}`;
   let resp = await fetch(url);
   return await resp.json();

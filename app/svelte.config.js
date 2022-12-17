@@ -1,4 +1,4 @@
-import adapter from "@sveltejs/adapter-auto";
+import adapter from "@sveltejs/adapter-node";
 import { mdsvex } from "mdsvex";
 import rehypeKatexSvelte from "rehype-katex-svelte";
 import remarkMath from "remark-math";
