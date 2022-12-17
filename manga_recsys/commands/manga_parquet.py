@@ -2,24 +2,8 @@ from argparse import ArgumentParser
 
 from pyspark.sql import functions as F
 
+from manga_recsys.commands.utils import consolidate_parquet, mappify_struct
 from manga_recsys.spark import get_spark
-
-
-def convert_via_json(col, type):
-    # # https://stackoverflow.com/a/70393584
-    return F.from_json(F.to_json(col), schema=type)
-
-
-def combine_maps(list):
-    # https://stackoverflow.com/a/43724338
-    if not list:
-        return None
-    return {k: v for m in list for k, v in m.items()}
-
-
-def mappify_struct(col):
-    comb = F.udf(combine_maps, "map<string, string>")
-    return comb(convert_via_json(col, "array<map<string, string>>"))
 
 
 def parse_args():
@@ -52,7 +36,8 @@ def main():
         ).alias("attributes"),
     )
     clean.printSchema()
-    clean.repartition(args.partitions).write.parquet(args.output)
+    clean.repartition(1).write.parquet(args.output, mode="overwrite")
+    consolidate_parquet(args.output)
 
 
 if __name__ == "__main__":

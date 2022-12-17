@@ -34,8 +34,8 @@ for (;;) { Get-Date -format o; cat data/raw/2022-12-16-mangadex-chapter.ndjson |
 
 ```bash
 manga-parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
-
 tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules/
+chapter-parquet data/raw/2022-12-16-mangadex-chapter.ndjson data/processed/2022-12-16-mangadex-chapter
 ```
 
 ````

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "manga-recsys"
-version = "0.2.0"
+version = "0.3.0"
 description = ""
 authors = ["geospiza <geospiza@protonmail.com>"]
 readme = "README.md"
@@ -24,6 +24,7 @@ nb-black = "^1.0.7"
 
 [tool.poetry.scripts]
 manga-parquet = "manga_recsys.commands.manga_parquet:main"
+chapter-parquet = "manga_recsys.commands.chapter_parquet:main"
 tag-rules = "manga_recsys.commands.tag_rules:main"
 
 [build-system]

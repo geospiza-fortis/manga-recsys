@@ -61,6 +61,37 @@ root
 
 </div>
 
+## chapter
+
+See [MangaDex API documentation for chapter](https://api.mangadex.org/docs/docs/chapter/).
+
+### schema
+
+<div class="schema">
+
+```
+root
+ |-- id: string (nullable = true)
+ |    |-- chapter: string (nullable = true)
+ |    |-- createdAt: string (nullable = true)
+ |    |-- externalUrl: string (nullable = true)
+ |    |-- pages: long (nullable = true)
+ |    |-- publishAt: string (nullable = true)
+ |    |-- readableAt: string (nullable = true)
+ |    |-- title: string (nullable = true)
+ |    |-- translatedLanguage: string (nullable = true)
+ |    |-- updatedAt: string (nullable = true)
+ |    |-- version: long (nullable = true)
+ |    |-- volume: string (nullable = true)
+ |-- type: string (nullable = true)
+ |-- relationships: struct (nullable = true)
+ |    |-- manga: string (nullable = true)
+ |    |-- scanlation_group: string (nullable = true)
+ |    |-- user: string (nullable = true)
+```
+
+</div>
+
 <style>
 .schema {
     overflow-x: auto;
