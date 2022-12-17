@@ -15,6 +15,7 @@ Scrapy = "^2.7.1"
 scikit-learn = "^1.2.0"
 pyspark = "^3.3.1"
 matplotlib = "^3.6.2"
+networkx = "^2.8.8"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.5.1"
