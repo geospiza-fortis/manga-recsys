@@ -1,24 +1,15 @@
-from argparse import ArgumentParser
-
 from pyspark.sql import functions as F
 
-from manga_recsys.commands.utils import consolidate_parquet, mappify_struct
+from manga_recsys.commands.utils import (
+    consolidate_parquet,
+    mappify_struct,
+    parse_parquet_args,
+)
 from manga_recsys.spark import get_spark
 
 
-def parse_args():
-    """Parse the input path, output path, and spark options."""
-    parser = ArgumentParser()
-    parser.add_argument("input", help="Input path")
-    parser.add_argument("output", help="Output path")
-    parser.add_argument("--cores", type=int, default=16)
-    parser.add_argument("--memory", default="24g")
-    parser.add_argument("--partitions", type=int, default=1)
-    return parser.parse_args()
-
-
 def main():
-    args = parse_args()
+    args = parse_parquet_args()
     spark = get_spark(cores=args.cores, memory=args.memory)
 
     raw = spark.read.text(args.input)

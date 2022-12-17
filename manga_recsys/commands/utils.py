@@ -1,7 +1,18 @@
 import shutil
+from argparse import ArgumentParser
 from pathlib import Path
 
 from pyspark.sql import functions as F
+
+
+def parse_parquet_args():
+    """Parse the input path, output path, and spark options."""
+    parser = ArgumentParser()
+    parser.add_argument("input", help="Input path")
+    parser.add_argument("output", help="Output path")
+    parser.add_argument("--cores", type=int, default=16)
+    parser.add_argument("--memory", default="24g")
+    return parser.parse_args()
 
 
 def consolidate_parquet(path):
