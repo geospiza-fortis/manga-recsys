@@ -1,7 +1,7 @@
 import pandas as pd
 import scrapy
 
-BASE_URI = "https://api.mangadex.org/manga"
+BASE_URI = "https://api.mangadex.org"
 
 
 class MangaSpider(scrapy.Spider):
@@ -21,7 +21,7 @@ class MangaSpider(scrapy.Spider):
         df = pd.read_csv(path)
         if limit:
             df = df.head(int(limit))
-        self.start_urls = df._id.apply(lambda x: f"{BASE_URI}/{x}").tolist()
+        self.start_urls = df._id.apply(lambda x: f"{BASE_URI}/chapter/{x}").tolist()
         super().__init__(**kwargs)
 
     def parse(self, response):
