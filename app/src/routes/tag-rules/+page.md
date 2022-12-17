@@ -20,6 +20,7 @@
 
 This table contains [association rules][wikipedia] for tags in the mangadex dataset.
 We can use these association rules to find relationships and generate recommendations between tags.
+Also take a look at the [network visualization](./tag-rules/network).
 
 <Table data={assoc_rules} {options} />
 
