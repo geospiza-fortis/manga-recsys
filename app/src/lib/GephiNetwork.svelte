@@ -1,5 +1,5 @@
 <script>
-  import { networkGephiParser } from "vis-network/esnext";
+  import { networkGephiParser } from "vis-network/standalone";
   import Network from "./Network.svelte";
   import { browser } from "$app/environment";
 
