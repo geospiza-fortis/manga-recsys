@@ -24,6 +24,7 @@
   "dependencies": {
     "lodash-es": "^4.17.21",
     "tabulator-tables": "^5.4.3",
+    "tippy.js": "^6.3.7",
     "vis-network": "^9.1.2"
   }
 }
