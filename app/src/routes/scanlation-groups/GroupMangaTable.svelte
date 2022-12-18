@@ -1,12 +1,9 @@
 <script>
   import Table from "$lib/Table.svelte";
-  import { fetch_data } from "$lib/data.js";
 
   async function get_group_manga(group_id) {
-    return await fetch_data({
-      fetch,
-      path: `data/processed/2022-12-17-metadata-listing/group_manga/${group_id}.json`
-    });
+    let resp = await fetch(`/api/v1/metadata/group_manga/${group_id}.json`);
+    return await resp.json();
   }
 
   export let group_id;
@@ -24,7 +21,7 @@
     initialSort: [{ column: "chapter_count", dir: "desc" }]
   };
 
-  $: group_id && get_group_manga(group_id).then((d) => (data = [...d]));
+  $: group_id && get_group_manga(group_id).then((r) => (data = [...r]));
 </script>
 
 <Table {data} {options} />

@@ -1,6 +1,15 @@
 # data
 
+This page contains scraped and processed data from MangaDex.
+The schemas are applicable to the parquet datasets
+Minor structural transformations have been applied to make it easier to process that data via PySpark.
+
 ## manga
+
+Download link:
+
+- [manga.parquet](/api/v1/data/manga.parquet)
+- [manga.ndjson](/api/v1/data/manga.ndjson)
 
 See [MangaDex API documentation for manga](https://api.mangadex.org/docs/docs/manga/).
 
@@ -63,6 +72,11 @@ root
 
 ## chapter
 
+Download links:
+
+- [chapter.parquet](/api/v1/data/chapter.parquet)
+- [chapter.njson](/api/v1/data/chapter.njson)
+
 See [MangaDex API documentation for chapter](https://api.mangadex.org/docs/docs/chapter/).
 
 ### schema
@@ -93,6 +107,11 @@ root
 </div>
 
 ## group
+
+Download link:
+
+- [group.parquet](/api/v1/data/group.parquet)
+- [group.ndjson](/api/v1/data/group.ndjson)
 
 See [MangaDex API documentation for group](https://api.mangadex.org/docs/docs/group/).
 

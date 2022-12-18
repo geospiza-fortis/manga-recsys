@@ -1,10 +1,6 @@
-import { fetch_data } from "$lib/data.js";
-
 export async function load({ fetch }) {
+  let resp = await fetch(`/api/v1/metadata/group_summary.json?server=true`);
   return {
-    group_summary: await fetch_data({
-      fetch,
-      path: "/data/processed/2022-12-17-metadata-listing/group_summary.json"
-    })
+    group_summary: await resp.json()
   };
 }
