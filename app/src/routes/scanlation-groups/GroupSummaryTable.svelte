@@ -1,30 +1,23 @@
 <script>
   import Table from "$lib/Table.svelte";
-  import tippy from "tippy.js";
-  import "tippy.js/dist/tippy.css";
 
   export let data;
+  export let selected_group_id = null;
+  let table = null;
+
   let options = {
     autoColumns: true,
     pagination: true,
-    paginationSize: 20
+    paginationSize: 10,
+    selectable: 1,
+    // sort by manga count descending
+    initialSort: [{ column: "manga_count", dir: "desc" }],
+    // hide the id column
+    autoColumnsDefinitions: [{ field: "group_id", visible: false }]
   };
-  let table = null;
-
-  // set callback on mouseover on the row
   $: table &&
-    table.on("rowMouseOver", (e, row) => {
-      // get group_id from row
-      let group_id = row.getData().group_id;
-      console.log("group_id", group_id);
-      let element = row.getElement();
-
-      // now let's add a tooltip using tippy
-      tippy(element, {
-        // add an iframe to the mangadex page
-        content: "<iframe src='https://mangadex.org/group/" + group_id + "'></iframe>",
-        allowHTML: true
-      });
+    table.on("rowClick", (_, row) => {
+      selected_group_id = row.getData().group_id;
     });
 </script>
 

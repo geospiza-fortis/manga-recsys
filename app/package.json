@@ -22,6 +22,7 @@
   },
   "type": "module",
   "dependencies": {
+    "fuse.js": "^6.6.2",
     "lodash-es": "^4.17.21",
     "tabulator-tables": "^5.4.3",
     "tippy.js": "^6.3.7",
