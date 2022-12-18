@@ -105,8 +105,8 @@ def main():
     group_summary.printSchema()
 
     write_df(group_manga, Path(args.output) / "group_manga")
+    write_df_per_group(group_manga, Path(args.output) / "group_manga")
     write_df(group_summary, Path(args.output) / "group_summary")
-    write_df_per_group(group_manga, Path(args.output) / "group_summary")
 
 
 if __name__ == "__main__":

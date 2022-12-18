@@ -1,5 +1,5 @@
 <script>
-  let entries = ["home", "tag-rules", "data"];
+  let entries = ["home", "tag-rules", "scanlation-groups", "data"];
 </script>
 
 <main>
