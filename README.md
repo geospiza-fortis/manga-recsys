@@ -43,8 +43,15 @@ manga-parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-1
 chapter-parquet data/raw/2022-12-16-mangadex-chapter.ndjson data/processed/2022-12-16-mangadex-chapter
 group-parquet data/raw/2022-12-17-mangadex-group.ndjson data/processed/2022-12-17-mangadex-group
 
-tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules
 metadata-listing data/processed/2022-12-17-mangadex-group.parquet data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing
+```
+
+### modeling
+
+```bash
+tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules
+
+recommendation-group-manga-network data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing/group_manga.parquet data/processed/2022-12-18-recommendation-group-manga-network
 ```
 
 ### storage

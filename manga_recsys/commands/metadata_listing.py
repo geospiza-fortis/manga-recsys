@@ -9,7 +9,7 @@ import tqdm
 from pyspark.sql import Window
 from pyspark.sql import functions as F
 
-from manga_recsys.commands.utils import consolidate_parquet
+from manga_recsys.commands.utils import write_df, write_df_per_group
 from manga_recsys.spark import get_spark
 
 
@@ -25,23 +25,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def write_df(df, path):
-    path = Path(path)
-    df.repartition(1).write.parquet(path.as_posix(), mode="overwrite")
-    consolidate_parquet(path)
-    df.toPandas().to_json(path.with_suffix(".json"), orient="records", indent=2)
-
-
-def write_df_per_group(df, path):
-    path = Path(path)
-    path.mkdir(parents=True, exist_ok=True)
-    pdf = df.toPandas()
-    # TODO: can be done in parallel
-    for group_id in tqdm.tqdm(pdf.group_id.unique()):
-        group_df = pdf[pdf.group_id == group_id]
-        group_df.to_json(path / f"{group_id}.json", orient="records", indent=2)
-
-
 def main():
     args = parse_args()
     spark = get_spark(cores=args.cores, memory=args.memory)
@@ -52,7 +35,7 @@ def main():
 
     manga_name_lang = manga.select(
         F.col("id").alias("manga_id"),
-        F.explode("attributes.title").alias("lang", "name"),
+        F.explode("attributes.title").alias("lang", "manga_name"),
     )
 
     lang_ordered = (
@@ -70,13 +53,14 @@ def main():
             F.row_number().over(Window.partitionBy("manga_id").orderBy("rank")),
         )
         .filter(F.col("manga_lang_rank") == 1)
-        .select("manga_id", "name", "lang")
+        .select("manga_id", "manga_name", "lang")
     )
 
     chapter_groups = chapter.select(
         F.col("id").alias("chapter_id"),
         F.col("relationships.scanlation_group").alias("group_id"),
         F.col("relationships.manga").alias("manga_id"),
+        F.col("attributes.pages"),
     )
 
     group_manga = (
@@ -87,8 +71,14 @@ def main():
         .join(manga_name, "manga_id")
     )
     group_manga = (
-        group_manga.groupBy(*[c for c in group_manga.columns if c != "chapter_id"])
-        .agg(F.countDistinct("chapter_id").alias("chapter_count"))
+        group_manga.groupBy(
+            *[c for c in group_manga.columns if c not in ["chapter_id", "pages"]]
+        )
+        .agg(
+            F.countDistinct("chapter_id").alias("chapter_count"),
+            F.sum("pages").alias("page_count"),
+        )
+        .orderBy("group_id", "manga_id")
         .cache()
     )
 
@@ -97,15 +87,19 @@ def main():
         .agg(
             F.countDistinct("manga_id").alias("manga_count"),
             F.sum("chapter_count").alias("total_chapters"),
+            F.sum("page_count").alias("total_pages"),
         )
+        .orderBy("group_id")
         .cache()
     )
 
     group_manga.printSchema()
+    group_manga.show()
     group_summary.printSchema()
+    group_summary.show()
 
     write_df(group_manga, Path(args.output) / "group_manga")
-    write_df_per_group(group_manga, Path(args.output) / "group_manga")
+    write_df_per_group(group_manga, Path(args.output) / "group_manga", args.cores)
     write_df(group_summary, Path(args.output) / "group_summary")
 
 

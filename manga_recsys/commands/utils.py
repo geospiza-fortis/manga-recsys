@@ -1,7 +1,9 @@
 import shutil
 from argparse import ArgumentParser
+from multiprocessing import Pool
 from pathlib import Path
 
+import tqdm
 from pyspark.sql import functions as F
 
 
@@ -25,6 +27,29 @@ def consolidate_parquet(path):
     source = next(path.glob("*.parquet"))
     shutil.move(source, path.parent / name)
     shutil.rmtree(path)
+
+
+def write_df(df, path):
+    path = Path(path)
+    df.repartition(1).write.parquet(path.as_posix(), mode="overwrite")
+    consolidate_parquet(path)
+    df.toPandas().to_json(path.with_suffix(".json"), orient="records", indent=2)
+
+
+def _write_df_per_group(pdf, path, group_id):
+    group_df = pdf[pdf.group_id == group_id]
+    group_df.to_json(path / f"{group_id}.json", orient="records", indent=2)
+
+
+def write_df_per_group(df, path, parallelism=8):
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    pdf = df.toPandas()
+    with Pool(parallelism) as p:
+        p.starmap(
+            _write_df_per_group,
+            tqdm.tqdm([(pdf, path, group_id) for group_id in pdf.group_id.unique()]),
+        )
 
 
 def convert_via_json(col, type):

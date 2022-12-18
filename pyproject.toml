@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "manga-recsys"
-version = "0.5.0"
+version = "0.6.0"
 description = ""
 authors = ["geospiza <geospiza@protonmail.com>"]
 readme = "README.md"
@@ -29,6 +29,7 @@ chapter-parquet = "manga_recsys.commands.chapter_parquet:main"
 group-parquet = "manga_recsys.commands.group_parquet:main"
 tag-rules = "manga_recsys.commands.tag_rules:main"
 metadata-listing = "manga_recsys.commands.metadata_listing:main"
+recommendation-group-manga-network = "manga_recsys.commands.recommendation.group_manga_network:main"
 
 [build-system]
 requires = ["poetry-core"]
