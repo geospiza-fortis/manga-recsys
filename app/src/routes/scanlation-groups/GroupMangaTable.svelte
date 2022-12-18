@@ -16,6 +16,7 @@
     autoColumns: true,
     pagination: true,
     paginationSize: 10,
+    paginationCounter: "rows",
     autoColumnsDefinitions: [
       { field: "manga_id", visible: false },
       { field: "group_id", visible: false }

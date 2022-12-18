@@ -2,32 +2,43 @@
   import Table from "$lib/Table.svelte";
   import Fuse from "fuse.js";
 
+  // NOTE: this code is awful, but it gets the job done. We basically hook into
+  // the header filter to get the value of the filter, and then generate a new
+  // set of data. We then recreate the table with the new data. This is bad
+  // because we are creating a new table every time the data changes, which is
+  // not ideal. Instead, we should be able to update the data in the table. This
+  // is doable, but it's more effort than I want to expend right now.
+
   export let data;
   export let selected_group_id;
   let table;
   let fuse;
 
-  let filtered_group_ids = new Set(data.map((r) => r.group_id));
-  $: console.log(filtered_group_ids);
+  let headerValue;
 
-  // custom header search: https://tabulator.info/docs/5.4/filter#func-custom
-  let options = {
+  $: options = {
     autoColumns: true,
     pagination: true,
     paginationSize: 10,
+    paginationCounter: "rows",
     selectable: 1,
-    // sort by manga count descending
-    initialSort: [{ column: "manga_count", dir: "desc" }],
-    // hide the id column
+    initialSort: [
+      { column: "score", dir: "asc" }
+      // TODO: initial sort with two columns is broken
+      // { column: "manga_count", dir: "desc" }
+    ],
     autoColumnsDefinitions: [
       { field: "group_id", visible: false },
       {
         field: "group_name",
         headerFilter: true,
-        headerFilterFunc: (headerValue, rowValue, rowData, filterParams) =>
-          filtered_group_ids.has(rowData.group_id)
-      }
-    ]
+        // no-op function since we're going to filter the data ourselves
+        headerFilterFunc: () => true
+      },
+      // hide score column
+      { field: "score", visible: false }
+    ],
+    initialHeaderFilter: [{ field: "group_name", value: headerValue }]
   };
   // return scores
   $: data && (fuse = new Fuse(data, { keys: ["group_name"], includeScore: true }));
@@ -39,13 +50,14 @@
     fuse &&
     table.on("dataFiltering", (filters) => {
       // get the header filter for group name
-      const group_name_filter = filters.find((f) => f.field === "group_name");
+      const groupFilter = filters.find((f) => f.field === "group_name");
       // get the value from the header filter
-      if (!group_name_filter) return;
-      let search = fuse.search(group_name_filter.value);
-      console.log(search);
-      filtered_group_ids = new Set(search.map((r) => r.item.group_id));
+      headerValue = groupFilter ? groupFilter.value : null;
     });
+  $: filteredData =
+    headerValue && headerValue.length > 0
+      ? fuse.search(headerValue).map((r) => ({ ...r.item, score: r.score }))
+      : data.map((r) => ({ ...r, score: 1 / r.manga_count }));
 </script>
 
-<Table {data} {options} bind:table />
+<Table data={filteredData} {options} bind:table />
