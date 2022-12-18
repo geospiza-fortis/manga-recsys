@@ -39,9 +39,13 @@ def combine_maps(list):
     return {k: v for m in list for k, v in m.items()}
 
 
-def mappify_struct(col):
+def mappify_array_struct(col):
     comb = F.udf(combine_maps, "map<string, string>")
     return comb(convert_via_json(col, "array<map<string, string>>"))
+
+
+def mappify_struct(col):
+    return convert_via_json(col, "map<string, string>")
 
 
 # convert an array of objects with type and value into a struct

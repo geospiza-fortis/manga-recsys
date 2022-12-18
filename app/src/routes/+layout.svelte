@@ -1,9 +1,14 @@
+<script>
+  let entries = ["home", "tag-rules", "data"];
+</script>
+
 <main>
   <nav>
     <div>
-      <a href="/">home</a>
-      <a href="/tag-rules">tag rules</a>
-      <a href="/data">data</a>
+      {#each entries as entry}
+        <a href={entry == "home" ? "/" : `/${entry}`}>[{entry}]</a>
+        <span />
+      {/each}
     </div>
   </nav>
   <slot />

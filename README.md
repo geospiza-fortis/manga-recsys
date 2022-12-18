@@ -40,19 +40,19 @@ scrapy runspider manga_recsys/scrapy/group.py -a path=data/processed/2022-12-16-
 
 ```bash
 manga-parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
-tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules/
 chapter-parquet data/raw/2022-12-16-mangadex-chapter.ndjson data/processed/2022-12-16-mangadex-chapter
 group-parquet data/raw/2022-12-17-mangadex-group.ndjson data/processed/2022-12-17-mangadex-group
-```
 
-````
+tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules
+metadata-listing data/processed/2022-12-17-mangadex-group.parquet data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing
+```
 
 ### storage
 
 ```bash
 gcloud --project manga-recsys storage buckets create gs://manga-recsys
 gsutil -m rsync -r data/ gs://manga-recsys/data/
-````
+```
 
 ### decompressive transcoding
 

@@ -92,6 +92,49 @@ root
 
 </div>
 
+## group
+
+See [MangaDex API documentation for group](https://api.mangadex.org/docs/docs/group/).
+
+### schema
+
+<div class="schema">
+
+```
+root
+ |-- attributes: struct (nullable = true)
+ |    |-- altNames: array (nullable = true)
+ |    |    |-- element: struct (containsNull = true)
+ |    |    |    |-- en: string (nullable = true)
+ |    |-- contactEmail: string (nullable = true)
+ |    |-- createdAt: string (nullable = true)
+ |    |-- description: string (nullable = true)
+ |    |-- discord: string (nullable = true)
+ |    |-- focusedLanguages: array (nullable = true)
+ |    |    |-- element: string (containsNull = true)
+ |    |-- inactive: boolean (nullable = true)
+ |    |-- ircChannel: string (nullable = true)
+ |    |-- ircServer: string (nullable = true)
+ |    |-- locked: boolean (nullable = true)
+ |    |-- mangaUpdates: string (nullable = true)
+ |    |-- name: string (nullable = true)
+ |    |-- official: boolean (nullable = true)
+ |    |-- publishDelay: string (nullable = true)
+ |    |-- twitter: string (nullable = true)
+ |    |-- updatedAt: string (nullable = true)
+ |    |-- verified: boolean (nullable = true)
+ |    |-- version: long (nullable = true)
+ |    |-- website: string (nullable = true)
+ |-- id: string (nullable = true)
+ |-- relationships: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- id: string (nullable = true)
+ |    |    |-- type: string (nullable = true)
+ |-- type: string (nullable = true)
+```
+
+</div>
+
 <style>
 .schema {
     overflow-x: auto;
