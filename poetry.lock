@@ -370,7 +370,7 @@ unicode-backport = ["unicodedata2"]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3272,4 +3272,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "efd0f97848244cf3172653e068b6f35be8461394e83fd16f0f6bbe81dcf96b42"
+content-hash = "121a68998c3d6e9277e136ac4bbacfa464d64cb441526978c7171c328addaa16"

@@ -1,20 +1,23 @@
+import functools
 import shutil
-from argparse import ArgumentParser
 from multiprocessing import Pool
 from pathlib import Path
 
+import click
 import tqdm
 from pyspark.sql import functions as F
 
 
-def parse_parquet_args():
-    """Parse the input path, output path, and spark options."""
-    parser = ArgumentParser()
-    parser.add_argument("input", help="Input path")
-    parser.add_argument("output", help="Output path")
-    parser.add_argument("--cores", type=int, default=16)
-    parser.add_argument("--memory", default="24g")
-    return parser.parse_args()
+def simple_io_options(func):
+    @click.option("--cores", default=8, help="Number of cores to use")
+    @click.option("--memory", default="6g", help="Amount of memory to use")
+    @click.argument("input", type=click.Path(exists=True))
+    @click.argument("output", type=click.Path())
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def consolidate_parquet(path):

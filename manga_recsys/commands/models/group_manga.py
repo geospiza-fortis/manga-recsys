@@ -5,9 +5,9 @@ translated."""
 
 This is useful for traversing the relationships between the different metadata
 """
-from argparse import ArgumentParser
 from pathlib import Path
 
+import click
 from pyspark.ml import Pipeline
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.feature import IndexToString, StringIndexer
@@ -18,26 +18,32 @@ from manga_recsys.commands.utils import write_df, write_df_per_group
 from manga_recsys.spark import get_spark
 
 
-def parse_args():
-    """Parse the input path, output path, and spark options."""
-    parser = ArgumentParser()
-    parser.add_argument("input_chapter", help="Input path for chapter metadata")
-    parser.add_argument("input_group_manga", help="Input path for group manga metadata")
-    parser.add_argument("output", help="Output path")
-    parser.add_argument("--num_recs", type=int, default=20)
-    parser.add_argument("--cores", type=int, default=16)
-    parser.add_argument("--memory", default="24g")
-    return parser.parse_args()
+@click.command()
+@click.argument("input_chapter", type=click.Path(exists=True))
+@click.argument("input_group_manga", type=click.Path(exists=True))
+@click.argument("output", type=click.Path())
+@click.option("--num_recs", type=int, default=20)
+@click.option("--cores", type=int, default=16)
+@click.option("--memory", default="24g")
+def group_manga(input_chapter, input_group_manga, output, num_recs, cores, memory):
+    """Create a recommendation for a group based on what manga they have translated.
 
+    This effectively forms a bi-partite graph between groups and manga, with the
+    edge weights being the number of chapters translated. We use alternating
+    least-squares to compute the non-negative matrix factorization, which allows
+    us to find latent factors for groups and manga.
 
-def main():
-    args = parse_args()
-    spark = get_spark(cores=args.cores, memory=args.memory)
+    This is our starting point for analysis, since it's easy to construct.
+    However, I do have concerns about the number of groups that overlap on a
+    series because of scanlation culture of not "sniping" projects.
+    """
+    spark = get_spark(cores=cores, memory=memory)
 
-    chapter = spark.read.parquet(args.input_chapter)
-    group_manga = spark.read.parquet(args.input_group_manga)
+    chapter = spark.read.parquet(input_chapter)
+    group_manga = spark.read.parquet(input_group_manga)
 
-    # create a pipeline that string vectorizes both scanlation_group and manga, then fits an ALS model
+    # create a pipeline that string vectorizes both scanlation_group and manga,
+    # then fits an ALS model
     pipeline = Pipeline(
         stages=[
             StringIndexer(
@@ -71,7 +77,7 @@ def main():
     rmse = evaluator.evaluate(scan_manga_pred)
     print(f"Root-mean-square error = {rmse}")
 
-    user_recs = model.stages[-1].recommendForAllUsers(args.num_recs)
+    user_recs = model.stages[-1].recommendForAllUsers(num_recs)
 
     exploded_user_recs = user_recs.withColumn(
         "exploded", F.explode("recommendations")
@@ -111,9 +117,5 @@ def main():
     inversed_recs.show()
 
     # now write this out to parquet
-    write_df(inversed_recs, Path(args.output) / "recommendations.parquet")
-    write_df_per_group(inversed_recs, Path(args.output) / "recommendations")
-
-
-if __name__ == "__main__":
-    main()
+    write_df(inversed_recs, Path(output) / "recommendations.parquet")
+    write_df_per_group(inversed_recs, Path(output) / "recommendations")

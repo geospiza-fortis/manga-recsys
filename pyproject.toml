@@ -17,6 +17,7 @@ pyspark = "^3.3.1"
 matplotlib = "^3.6.2"
 networkx = "^2.8.8"
 tqdm = "^4.64.1"
+click = "^8.1.3"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.5.1"
@@ -24,9 +25,7 @@ black = { version = "^22.12.0", allow-prereleases = true }
 nb-black = "^1.0.7"
 
 [tool.poetry.scripts]
-manga-parquet = "manga_recsys.commands.manga_parquet:main"
-chapter-parquet = "manga_recsys.commands.chapter_parquet:main"
-group-parquet = "manga_recsys.commands.group_parquet:main"
+manga-recsys = "manga_recsys.commands:cli"
 tag-rules = "manga_recsys.commands.tag_rules:main"
 metadata-listing = "manga_recsys.commands.metadata_listing:main"
 recommendation-group-manga-network = "manga_recsys.commands.recommendation.group_manga_network:main"

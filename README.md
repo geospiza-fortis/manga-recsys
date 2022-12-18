@@ -39,19 +39,19 @@ scrapy runspider manga_recsys/scrapy/group.py -a path=data/processed/2022-12-16-
 ### preprocessing
 
 ```bash
-manga-parquet data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
-chapter-parquet data/raw/2022-12-16-mangadex-chapter.ndjson data/processed/2022-12-16-mangadex-chapter
-group-parquet data/raw/2022-12-17-mangadex-group.ndjson data/processed/2022-12-17-mangadex-group
+manga-recsys parquet manga data/raw/2022-12-10-mangadex-manga.ndjson data/processed/2022-12-10-mangadex-manga
+manga-recsys parquet chapter data/raw/2022-12-16-mangadex-chapter.ndjson data/processed/2022-12-16-mangadex-chapter
+manga-recsys parquet group data/raw/2022-12-17-mangadex-group.ndjson data/processed/2022-12-17-mangadex-group
 
-metadata-listing data/processed/2022-12-17-mangadex-group.parquet data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing
+manga-recsys metadata-listing data/processed/2022-12-17-mangadex-group.parquet data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing
 ```
 
 ### modeling
 
 ```bash
-tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules
+manga-recsys models tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules
 
-recommendation-group-manga-network data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing/group_manga.parquet data/processed/2022-12-18-recommendation-group-manga-network
+manga-recsys models group-manga data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing/group_manga.parquet data/processed/2022-12-18-recommendation-group-manga-network
 ```
 
 ### storage
@@ -64,6 +64,7 @@ gsutil -m rsync -r data/ gs://manga-recsys/data/
 ### decompressive transcoding
 
 - https://cloud.google.com/storage/docs/transcoding
+- https://stackoverflow.com/questions/31170100/gsutil-rsync-with-gzip-compression
 
 The biggest design decision that needs to be handled is how to store all of the recommendations.
 I'm planning on storing all of the recommendations as a json file per entity.
