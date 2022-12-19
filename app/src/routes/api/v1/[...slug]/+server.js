@@ -14,7 +14,8 @@ const mapping = {
 
   // served compressed by default
   metadata: "data/gz/processed/2022-12-17-metadata-listing",
-  "models/group-manga": "data/gz/processed/2022-12-18-recommendation-group-manga"
+  // v1: data/gz/processed/2022-12-18-recommendation-group-manga
+  "models/group-manga": "data/gz/processed/2022-12-19-recommendation-group-manga"
 };
 
 export async function GET({ url, params, fetch }) {

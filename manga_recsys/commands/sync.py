@@ -10,7 +10,6 @@ served compressed.
 """
 
 import gzip
-import os
 import shutil
 import subprocess
 from multiprocessing import Pool

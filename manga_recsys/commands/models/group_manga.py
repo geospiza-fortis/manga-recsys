@@ -64,6 +64,8 @@ def group_manga(input_chapter, input_group_manga, output, num_recs, cores, memor
         chapter.select("attributes.pages", "relationships.*")
         .groupby("manga", "scanlation_group")
         .agg(F.sum("pages").alias("pages"))
+        # log transform pages to make it look normal
+        .withColumn("pages", F.log(F.col("pages") + 1))
         .orderBy(F.desc("pages"))
         .where("manga is not null and scanlation_group is not null")
     )

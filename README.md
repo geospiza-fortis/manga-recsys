@@ -51,7 +51,11 @@ manga-recsys metadata data/processed/2022-12-17-mangadex-group.parquet data/proc
 ```bash
 manga-recsys models tag-rules data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-14-tag-rules
 
+# original model, page count rating
 manga-recsys models group-manga data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing/group_manga.parquet data/processed/2022-12-18-recommendation-group-manga
+
+# log-count rating
+manga-recsys models group-manga data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing/group_manga.parquet data/processed/2022-12-19-recommendation-group-manga
 ```
 
 ### storage
