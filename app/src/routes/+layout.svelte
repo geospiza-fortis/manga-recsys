@@ -17,6 +17,7 @@
 <style>
   main {
     margin-top: 1rem;
+    padding-bottom: 3rem;
     margin: 0 auto;
     max-width: 992px;
     box-sizing: border-box;
