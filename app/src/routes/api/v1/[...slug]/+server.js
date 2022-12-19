@@ -10,9 +10,11 @@ const mapping = {
   "data/manga.ndjson": "data/raw/2022-12-10-mangadex-manga.ndjson",
   "data/chapter.ndjson": "data/raw/2022-12-16-mangadex-chapter.ndjson",
   "data/group.ndjson": "data/raw/2022-12-17-mangadex-group.ndjson",
-  metadata: "data/processed/2022-12-17-metadata-listing",
   "models/tag-rules": "data/processed/2022-12-14-tag-rules",
-  "models/group-manga": "data/processed/2022-12-18-recommendation-group-manga"
+
+  // served compressed by default
+  metadata: "data/gz/processed/2022-12-17-metadata-listing",
+  "models/group-manga": "data/gz/processed/2022-12-18-recommendation-group-manga"
 };
 
 export async function GET({ url, params, fetch }) {
@@ -26,6 +28,10 @@ export async function GET({ url, params, fetch }) {
       slug = slug.replace(key, value);
       break;
     }
+  }
+  // get decompressed version if we're on server
+  if (server) {
+    slug = slug.replace("/gz/", "/");
   }
 
   let redirect_url = build_path(slug, !server);
