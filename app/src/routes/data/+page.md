@@ -75,7 +75,7 @@ root
 Download links:
 
 - [chapter.parquet](/api/v1/data/chapter.parquet)
-- [chapter.njson](/api/v1/data/chapter.njson)
+- [chapter.ndjson](/api/v1/data/chapter.ndjson)
 
 See [MangaDex API documentation for chapter](https://api.mangadex.org/docs/docs/chapter/).
 

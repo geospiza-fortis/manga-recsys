@@ -123,13 +123,15 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
             "attributes.contentRating",
         )
         .join(
-            group_manga.select(
-                F.col("manga_id").alias("id"),
-                F.col("manga_name").alias("name"),
-                "chapter_count",
-                "page_count",
+            group_manga.withColumn("id", F.col("manga_id"))
+            .groupBy("id")
+            .agg(
+                F.first("manga_name").alias("name"),
+                F.max("chapter_count").alias("chapter_count"),
+                F.max("page_count").alias("page_count"),
             ),
             "id",
+            how="left",
         )
         .join(
             manga_name_description.select(
@@ -137,8 +139,9 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
                 F.col("manga_description").alias("description"),
             ),
             "id",
+            how="left",
         )
-        .join(manga_tags, "id")
+        .join(manga_tags, "id", how="left")
     )
 
     group_info = group.select(
@@ -160,11 +163,14 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
     manga_info.printSchema()
     manga_info.show()
 
-    write_df(group_manga, Path(output) / "group_manga")
-    write_df_per_uid(group_manga, Path(output) / "group_manga", "group_id", cores)
-    write_df(group_summary, Path(output) / "group_summary")
+    output = Path(output)
+    gz_output = Path("/".join([output.parts[0], "gz", *output.parts[1:]]))
 
-    write_df(group_info, Path(output) / "group_info")
-    write_df_per_uid(group_info, Path(output) / "group_info", "id", cores)
-    write_df(manga_info, Path(output) / "manga_info")
-    write_df_per_uid(manga_info, Path(output) / "manga_info", "id", cores)
+    write_df(group_manga, output / "group_manga")
+    write_df_per_uid(group_manga, gz_output / "group_manga", "group_id", cores)
+    write_df(group_summary, output / "group_summary")
+
+    write_df(group_info, output / "group_info")
+    write_df_per_uid(group_info, gz_output / "group_info", "id", cores)
+    write_df(manga_info, output / "manga_info")
+    write_df_per_uid(manga_info, gz_output / "manga_info", "id", cores)

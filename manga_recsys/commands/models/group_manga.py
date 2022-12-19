@@ -117,5 +117,7 @@ def group_manga(input_chapter, input_group_manga, output, num_recs, cores, memor
     inversed_recs.show()
 
     # now write this out to parquet
-    write_df(inversed_recs, Path(output) / "recommendations.parquet")
-    write_df_per_uid(inversed_recs, Path(output) / "recommendations", "group_id")
+    output = Path(output)
+    gz_output = Path("/".join([output.parts[0], "gz", *output.parts[1:]]))
+    write_df(inversed_recs, output / "recommendations")
+    write_df_per_uid(inversed_recs, gz_output / "recommendations", "group_id")

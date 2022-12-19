@@ -1,4 +1,6 @@
 import functools
+import gzip
+import json
 import shutil
 from multiprocessing import Pool
 from pathlib import Path
@@ -20,38 +22,59 @@ def simple_io_options(func):
     return wrapper
 
 
-def consolidate_parquet(path):
-    """Convert a single partition in a spark directory into a single parquet file
-    outside of it."""
+def _consolidate(path, file_ext):
     path = Path(path)
-    name = f"{path.name}.parquet"
+    name = f"{path.name}.{file_ext}"
     if (path.parent / name).exists():
         (path.parent / name).unlink()
-    source = next(path.glob("*.parquet"))
+    source = next(path.glob(f"*.{file_ext}"))
     shutil.move(source, path.parent / name)
     shutil.rmtree(path)
 
 
+def consolidate_parquet(path):
+    """Convert a single partition in a spark directory into a single parquet file
+    outside of it."""
+    _consolidate(path, "parquet")
+
+
+def consolidate_json(path):
+    """Convert a single partition in a spark directory into a single json file
+    outside of it."""
+    _consolidate(path, "json")
+
+
 def write_df(df, path):
     path = Path(path)
-    df.repartition(1).write.parquet(path.as_posix(), mode="overwrite")
+    parted = df.repartition(1).cache()
+    parted.write.parquet(path.as_posix(), mode="overwrite")
     consolidate_parquet(path)
-    df.toPandas().to_json(path.with_suffix(".json"), orient="records", indent=2)
+    collected = [row.asDict(recursive=True) for row in parted.collect()]
+    path.with_suffix(".json").write_text(json.dumps(collected))
+    parted.unpersist()
 
 
-def _write_df_per_uid(pdf, path, uid, uid_col="id"):
-    group_df = pdf[pdf[uid_col] == uid]
-    group_df.to_json(path / f"{uid}.json", orient="records", indent=2)
+def _write_df_per_uid(rows, path, uid, uid_col, compress):
+    d = [row.asDict(recursive=True) for row in rows if row[uid_col] == uid]
+    uid = d[0][uid_col]
+    json_data = json.dumps(d)
+    # write gzip to disk
+    out = Path(path / f"{uid}.json")
+    if compress:
+        out.write_bytes(gzip.compress(json_data.encode()))
+    else:
+        out.write_text(json_data)
 
 
-def write_df_per_uid(df, path, uid_col, parallelism=8):
+def write_df_per_uid(df, path, uid_col, compress=True, parallelism=8):
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
-    pdf = df.toPandas()
+    rows = df.collect()
+    unique_uids = set([row[uid_col] for row in rows])
     with Pool(parallelism) as p:
         p.starmap(
             _write_df_per_uid,
-            tqdm.tqdm([(pdf, path, uid, uid_col) for uid in pdf[uid_col].unique()]),
+            tqdm.tqdm([(rows, path, uid, uid_col, compress) for uid in unique_uids]),
         )
 
 

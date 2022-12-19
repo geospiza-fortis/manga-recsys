@@ -23,7 +23,7 @@
     initialSort: [{ column: "rating", dir: "desc" }]
   };
 
-  $: group_id && get_group_manga_recommendation(group_id).then((r) => (data = [...r]));
+  $: group_id && get_group_manga_recommendation(group_id).then((r) => (data = r));
 </script>
 
 <Table {data} {options} />

@@ -21,7 +21,7 @@
     initialSort: [{ column: "chapter_count", dir: "desc" }]
   };
 
-  $: group_id && get_group_manga(group_id).then((r) => (data = [...r]));
+  $: group_id && get_group_manga(group_id).then((r) => (data = r));
 </script>
 
 <Table {data} {options} />

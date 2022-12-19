@@ -36,7 +36,7 @@ We build a collaborative filtering model using the most straightforward possible
 We use the number of pages translated as our "rating" that a group gives a manga.
 We build the model using the [alternating least-squares (ALS)](https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.recommendation.ALS.html) algorithm implemented in PySpark.
 
-The recommendations are subjectively (and perhaps objectively, if we run some user tests) bad.
+The recommendations are bad.
 There are a few reasons for this:
 
 - The data is sparse. There are many groups and manga, but a small overlap between the two.
@@ -46,6 +46,7 @@ We choose group-manga recommendations as our first model because constructing th
 It serves as a proof of concept for building more complex models.
 This methodology is how we would build a recommendation system for user-manga relationships if that data were available.
 Training the model and making predictions is relatively cheap computationally, taking less than two minutes to run on a 8-cores @ 3.4GHz .
+It takes _far_ longer to copy the pre-computed predictions into static hosting due to the abundance of small files.
 
 Models we build in the future will be content-based, which means we will use similarities between descriptions and tags to make recommendations.
 The description-based recommendations will rely on title and description data embedded into vector space using techniques like [word2vec](https://arxiv.org/abs/1301.3781) or, more likely, [GPT-2](https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) via [HuggingFace](https://huggingface.co/).

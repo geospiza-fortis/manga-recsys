@@ -39,8 +39,9 @@ def sync():
 @click.option(
     "--overwrite/--no-overwrite", default=False, help="Overwrite existing files"
 )
+@click.option("--delete/--no-delete", default=False, help="Delete remote files")
 @click.option("--cores", default=8, help="Number of cores to use during compression")
-def upload_gz(overwrite, cores):
+def upload_gz(overwrite, delete, cores):
     """Compress and upload files that need to be served compressed."""
 
     input_path = Path("data/")
@@ -78,6 +79,7 @@ def upload_gz(overwrite, cores):
             "-h",
             "content-encoding:gzip",
             "rsync",
+            *(["-d"] if delete else []),
             "-r",
             "data/gz/",
             "gs://manga-recsys/data/gz/",
@@ -92,54 +94,43 @@ def upload(delete):
     """Upload local data to the remote storage bucket."""
     root = Path("data/")
     assert root.exists(), "data directory not found"
-    # TODO: don't upload any folders that have more than 1000 files, we make the
-    # assumption that these files will never be directly handled by a server
-    # (which is fine anyways).
-
-    # find all directories with more than 1000 files
-    excludes = []
-    for p in root.glob("**/"):
-        if "gz" in p.parts or p.is_file():
+    # TODO: we assume that we do not store small individual files in the
+    # processed folder, and instead write them directly into the gz folder. This
+    # is a bit hacky, but we avoid unnecessary strife trying to upload new files
+    # into gcs. We skip the gz folder because its contents are uploaded
+    # separately.
+    for path in root.glob("*"):
+        if path.is_file():
+            print("warning: found file in data directory", path)
             continue
-        if len(list(p.glob("*"))) > 1000:
-            # use the os specific path separator
-            excludes.append(p.relative_to(root))
-
-    # if we're on windows, we need to escape the pipe
-    # https://github.com/GoogleCloudPlatform/gsutil/issues/771
-    sep = '"|"' if os.name == "nt" else "|"
-    excludes = "^(" + sep.join(["gz"] + excludes) + ")"
-
-    subprocess.run(
-        [
+        if path.name == "gz":
+            continue
+        cmd = [
             "gsutil",
             "-m",
             "rsync",
             *(["-d"] if delete else []),
-            "-x",
-            excludes,
-            "-n",
             "-r",
-            "data/",
-            "gs://manga-recsys/data/",
-        ],
-        shell=True,
-    )
+            f"{path.as_posix()}/",
+            f"gs://manga-recsys/{path.as_posix()}/",
+        ]
+        print(" ".join(cmd))
+        subprocess.run(cmd, shell=True)
 
 
 @sync.command()
 def download():
     """Download remote data to the local storage bucket."""
     assert Path("data/").exists(), "data directory not found"
-    subprocess.run(
-        [
-            "gsutil",
-            "-m",
-            "rsync",
-            "-x",
-            "^gz/" "-r",
-            "gs://manga-recsys/data/",
-            "data/",
-        ],
-        shell=True,
-    )
+    cmd = [
+        "gsutil",
+        "-m",
+        "rsync",
+        "-x",
+        "^gz",
+        "-r",
+        "gs://manga-recsys/data/",
+        "data/",
+    ]
+    print(" ".join(cmd))
+    subprocess.run(cmd, shell=True)
