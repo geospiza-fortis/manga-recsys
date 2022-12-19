@@ -58,7 +58,10 @@ manga-recsys models group-manga data/processed/2022-12-16-mangadex-chapter.parqu
 
 ```bash
 gcloud --project manga-recsys storage buckets create gs://manga-recsys
-gsutil -m rsync -r data/ gs://manga-recsys/data/
+manga-recsys sync upload
+# for small static files that are directly downloaded by clients, to help save on bandwidth
+manga-recsys sync upload-gz
+manga-recsys sync download
 ```
 
 ### decompressive transcoding
