@@ -22,8 +22,12 @@
     ],
     initialSort: [{ column: "rating", dir: "desc" }]
   };
+  let tooltipElement;
 
   $: group_id && get_group_manga_recommendation(group_id).then((r) => (data = r));
 </script>
 
 <Table {data} {options} />
+
+<!-- hidden element for tippy -->
+<div bind:this={tooltipElement} />
