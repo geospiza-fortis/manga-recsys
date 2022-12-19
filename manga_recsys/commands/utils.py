@@ -39,19 +39,19 @@ def write_df(df, path):
     df.toPandas().to_json(path.with_suffix(".json"), orient="records", indent=2)
 
 
-def _write_df_per_group(pdf, path, group_id):
-    group_df = pdf[pdf.group_id == group_id]
-    group_df.to_json(path / f"{group_id}.json", orient="records", indent=2)
+def _write_df_per_uid(pdf, path, uid, uid_col="id"):
+    group_df = pdf[pdf[uid_col] == uid]
+    group_df.to_json(path / f"{uid}.json", orient="records", indent=2)
 
 
-def write_df_per_group(df, path, parallelism=8):
+def write_df_per_uid(df, path, uid_col, parallelism=8):
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     pdf = df.toPandas()
     with Pool(parallelism) as p:
         p.starmap(
-            _write_df_per_group,
-            tqdm.tqdm([(pdf, path, group_id) for group_id in pdf.group_id.unique()]),
+            _write_df_per_uid,
+            tqdm.tqdm([(pdf, path, uid, uid_col) for uid in pdf[uid_col].unique()]),
         )
 
 

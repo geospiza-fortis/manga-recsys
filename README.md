@@ -43,7 +43,7 @@ manga-recsys parquet manga data/raw/2022-12-10-mangadex-manga.ndjson data/proces
 manga-recsys parquet chapter data/raw/2022-12-16-mangadex-chapter.ndjson data/processed/2022-12-16-mangadex-chapter
 manga-recsys parquet group data/raw/2022-12-17-mangadex-group.ndjson data/processed/2022-12-17-mangadex-group
 
-manga-recsys metadata-listing data/processed/2022-12-17-mangadex-group.parquet data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing
+manga-recsys metadata data/processed/2022-12-17-mangadex-group.parquet data/processed/2022-12-10-mangadex-manga.parquet data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing
 ```
 
 ### modeling

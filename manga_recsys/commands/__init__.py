@@ -1,6 +1,6 @@
 import click
 
-from .metadata_listing import metadata_listing
+from .metadata import metadata
 from .models.group_manga import group_manga
 from .models.tag_rules import tag_rules
 from .parquet import parquet
@@ -22,5 +22,5 @@ def cli():
     pass
 
 
-for cmd in [sync, parquet, metadata_listing, models]:
+for cmd in [sync, parquet, metadata, models]:
     cli.add_command(cmd)

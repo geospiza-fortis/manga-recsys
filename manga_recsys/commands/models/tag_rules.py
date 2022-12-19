@@ -42,7 +42,3 @@ def tag_rules(input, output, cores, memory):
     assoc_df = fpm.associationRules.toPandas()
     assoc_df.to_parquet(f"{output}/association_rules.parquet")
     assoc_df.to_json(f"{output}/association_rules.json", orient="records")
-
-
-if __name__ == "__main__":
-    main()

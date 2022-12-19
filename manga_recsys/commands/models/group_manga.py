@@ -14,7 +14,7 @@ from pyspark.ml.feature import IndexToString, StringIndexer
 from pyspark.ml.recommendation import ALS
 from pyspark.sql import functions as F
 
-from manga_recsys.commands.utils import write_df, write_df_per_group
+from manga_recsys.commands.utils import write_df, write_df_per_uid
 from manga_recsys.spark import get_spark
 
 
@@ -118,4 +118,4 @@ def group_manga(input_chapter, input_group_manga, output, num_recs, cores, memor
 
     # now write this out to parquet
     write_df(inversed_recs, Path(output) / "recommendations.parquet")
-    write_df_per_group(inversed_recs, Path(output) / "recommendations")
+    write_df_per_uid(inversed_recs, Path(output) / "recommendations", "group_id")
