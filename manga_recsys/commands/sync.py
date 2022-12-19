@@ -10,6 +10,7 @@ served compressed.
 """
 
 import gzip
+import os
 import shutil
 import subprocess
 from multiprocessing import Pool
@@ -89,15 +90,35 @@ def upload_gz(overwrite, cores):
 @click.option("--delete/--no-delete", default=False, help="Delete remote files")
 def upload(delete):
     """Upload local data to the remote storage bucket."""
-    assert Path("data/").exists(), "data directory not found"
-    # TODO: don't upload any folders that have more than 1000 files in them
+    root = Path("data/")
+    assert root.exists(), "data directory not found"
+    # TODO: don't upload any folders that have more than 1000 files, we make the
+    # assumption that these files will never be directly handled by a server
+    # (which is fine anyways).
+
+    # find all directories with more than 1000 files
+    excludes = []
+    for p in root.glob("**/"):
+        if "gz" in p.parts or p.is_file():
+            continue
+        if len(list(p.glob("*"))) > 1000:
+            # use the os specific path separator
+            excludes.append(p.relative_to(root))
+
+    # if we're on windows, we need to escape the pipe
+    # https://github.com/GoogleCloudPlatform/gsutil/issues/771
+    sep = '"|"' if os.name == "nt" else "|"
+    excludes = "^(" + sep.join(["gz"] + excludes) + ")"
+
     subprocess.run(
         [
             "gsutil",
+            "-m",
             "rsync",
             *(["-d"] if delete else []),
             "-x",
-            "^gz",
+            excludes,
+            "-n",
             "-r",
             "data/",
             "gs://manga-recsys/data/",
@@ -111,6 +132,14 @@ def download():
     """Download remote data to the local storage bucket."""
     assert Path("data/").exists(), "data directory not found"
     subprocess.run(
-        ["gsutil", "rsync", "-x", "^gz/" "-r", "gs://manga-recsys/data/", "data/"],
+        [
+            "gsutil",
+            "-m",
+            "rsync",
+            "-x",
+            "^gz/" "-r",
+            "gs://manga-recsys/data/",
+            "data/",
+        ],
         shell=True,
     )
