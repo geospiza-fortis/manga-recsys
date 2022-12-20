@@ -34,7 +34,14 @@
         field: "group_name",
         headerFilter: true,
         // no-op function since we're going to filter the data ourselves
-        headerFilterFunc: () => true
+        headerFilterFunc: () => true,
+        formatter: "link",
+        formatterParams: {
+          urlPrefix: "https://mangadex.org/group/",
+          labelField: "group_name",
+          urlField: "group_id",
+          target: "_blank"
+        }
       },
       // hide score column
       { field: "score", visible: false }

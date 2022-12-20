@@ -17,8 +17,20 @@
     paginationSize: 10,
     paginationCounter: "rows",
     autoColumnsDefinitions: [
+      // hide ids and group
       { field: "manga_id", visible: false },
-      { field: "group_id", visible: false }
+      { field: "group_id", visible: false },
+      { field: "group_name", visible: false },
+      {
+        field: "manga_name",
+        formatter: "link",
+        formatterParams: {
+          urlPrefix: "https://mangadex.org/title/",
+          labelField: "manga_name",
+          urlField: "manga_id",
+          target: "_blank"
+        }
+      }
     ],
     initialSort: [{ column: "chapter_count", dir: "desc" }]
   };

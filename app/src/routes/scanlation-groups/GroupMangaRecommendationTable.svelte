@@ -16,11 +16,18 @@
     paginationSize: 10,
     paginationCounter: "rows",
     columns: [
-      { field: "group_id", visible: false },
-      { field: "group_name" },
-      { field: "manga_id", visible: false },
-      { field: "manga_name" },
-      { field: "rating" }
+      {
+        title: "manga",
+        field: "manga_name",
+        formatter: "link",
+        formatterParams: {
+          urlPrefix: "https://mangadex.org/title/",
+          labelField: "manga_name",
+          urlField: "manga_id",
+          target: "_blank"
+        }
+      },
+      { title: "rating", field: "rating" }
     ],
     initialSort: [{ column: "rating", dir: "desc" }]
   };
