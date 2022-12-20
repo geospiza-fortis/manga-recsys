@@ -85,3 +85,11 @@ On the other hand, when a user requests the data, we should serve the gzipped co
 The browser will decompress the content on the fly, and the user will not notice any difference.
 
 Implementing this is a bit tricky, but it should be possible.
+
+### model comparisons
+
+Here's one method for objectively comparing two recommendation models.
+We get the results of all neighbors to a given manga, with (node, recommendation) pairs.
+We do this for each model.
+Then we compute the jaccard similarity between the two sets of recommendations.
+We can test this against a null model by randomly shuffling pairs.
