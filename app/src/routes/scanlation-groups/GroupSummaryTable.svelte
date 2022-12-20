@@ -1,8 +1,6 @@
 <script>
   import Table from "$lib/Table.svelte";
-  import GroupInfo from "./GroupInfo.svelte";
-  import tippy from "tippy.js";
-  import "tippy.js/dist/tippy.css";
+  import { tippyGroupInfo, destroyTippy } from "$lib/tabulator.js";
   import Fuse from "fuse.js";
 
   // NOTE: this code is awful, but it gets the job done. We basically hook into
@@ -16,9 +14,6 @@
   export let selected_group_id;
   let table;
   let fuse;
-
-  let tooltipGroupId;
-  let tooltipElement;
 
   let headerValue;
 
@@ -50,18 +45,8 @@
   // return scores
   $: data && (fuse = new Fuse(data, { keys: ["group_name"], includeScore: true }));
   // when hovering over a row, show the tooltip with the group info
-  $: table &&
-    table.on("rowMouseOver", (_, row) => {
-      tooltipGroupId = row.getData().group_id;
-      // dynamically create a new svelte component for group info
-      // https://stackoverflow.com/questions/59889859/how-can-i-return-the-rendered-html-of-a-svelte-component
-
-      let rowElement = row.getElement();
-      tippy(rowElement, {
-        content: tooltipElement.innerHTML,
-        allowHTML: true
-      });
-    });
+  $: table && table.on("rowMouseOver", (_, row) => tippyGroupInfo(row, { placement: "bottom" }));
+  $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
   $: table &&
     table.on("rowClick", (_, row) => {
       selected_group_id = row.getData().group_id;
@@ -81,6 +66,3 @@
 </script>
 
 <Table data={filteredData} {options} bind:table />
-
-<!-- hidden element for tippy -->
-<GroupInfo group_id={tooltipGroupId} bind:element={tooltipElement} />

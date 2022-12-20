@@ -13,8 +13,11 @@
 
 <div bind:this={element}>
   {#if data}
-    <h1>{data.name}</h1>
+    <h2>{data.name} ({data.inactive ? "inactive" : "active"})</h2>
+    <!-- Created at yyyy-mm-dd, updated at yyyy-mm-dd -->
+    <i>Created {data.createdAt.substring(0, 10)}, updated {data.updatedAt.substring(0, 10)}</i>
     <p>{data.description}</p>
+  {:else}
+    <p>Loading...</p>
   {/if}
-  {JSON.stringify(data)}
 </div>
