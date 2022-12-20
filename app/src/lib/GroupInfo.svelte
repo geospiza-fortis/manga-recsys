@@ -16,7 +16,9 @@
     <h2>{data.name} ({data.inactive ? "inactive" : "active"})</h2>
     <!-- Created at yyyy-mm-dd, updated at yyyy-mm-dd -->
     <i>Created {data.createdAt.substring(0, 10)}, updated {data.updatedAt.substring(0, 10)}</i>
-    <p>{data.description}</p>
+    {#if data.description}
+      <p>{data.description}</p>
+    {/if}
   {:else}
     <p>Loading...</p>
   {/if}
