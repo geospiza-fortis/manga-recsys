@@ -22,7 +22,7 @@ from manga_recsys.spark import get_spark
 @click.argument("input_chapter", type=click.Path(exists=True))
 @click.argument("input_group_manga", type=click.Path(exists=True))
 @click.argument("output", type=click.Path())
-@click.option("--num_recs", type=int, default=20)
+@click.option("--num-recs", type=int, default=20)
 @click.option("--cores", type=int, default=16)
 @click.option("--memory", default="24g")
 def group_manga(input_chapter, input_group_manga, output, num_recs, cores, memory):

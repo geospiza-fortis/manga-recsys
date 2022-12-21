@@ -54,12 +54,16 @@ def write_df(df, path):
     parted.unpersist()
 
 
-def _write_df_per_uid(rows, path, uid, uid_col, compress):
-    d = [row.asDict(recursive=True) for row in rows if row[uid_col] == uid]
-    uid = d[0][uid_col]
-    json_data = json.dumps(d)
+def _rewrite_spark_json_partition(path, compress):
+    # parse the uid column from the pathname
+    uid_col, uid = path.parts[-2].split("=")
+    rows = []
+    for line in path.read_text(encoding="utf8").strip().splitlines():
+        rows.append({uid_col: uid, **json.loads(line)})
+
+    json_data = json.dumps(rows)
     # write gzip to disk
-    out = Path(path / f"{uid}.json")
+    out = Path(path.parent.parent / f"{uid}.json")
     if compress:
         out.write_bytes(gzip.compress(json_data.encode()))
     else:
@@ -69,13 +73,34 @@ def _write_df_per_uid(rows, path, uid, uid_col, compress):
 def write_df_per_uid(df, path, uid_col, compress=True, parallelism=8):
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
-    rows = df.collect()
-    unique_uids = set([row[uid_col] for row in rows])
+    # write by partition to disk, include index column
+    df.repartition(uid_col).write.partitionBy(uid_col).json(
+        path.as_posix(), mode="overwrite"
+    )
+    # now move all these files up a level into the main directory
+    paths = [p for p in path.glob("*/*.json")]
     with Pool(parallelism) as p:
-        p.starmap(
-            _write_df_per_uid,
-            tqdm.tqdm([(rows, path, uid, uid_col, compress) for uid in unique_uids]),
+        list(
+            tqdm.tqdm(
+                p.imap(
+                    functools.partial(
+                        _rewrite_spark_json_partition,
+                        compress=compress,
+                    ),
+                    paths,
+                ),
+                total=len(paths),
+            )
         )
+
+    # now remove all of the partition directories
+    directories = [p for p in path.glob("*") if p.is_dir()]
+    with Pool(parallelism) as p:
+        list(tqdm.tqdm(p.imap(shutil.rmtree, directories), total=len(directories)))
+
+    # also delete success files
+    for p in [p for p in path.glob("*") if not p.name.endswith(".json")]:
+        p.unlink()
 
 
 def convert_via_json(col, type):

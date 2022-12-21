@@ -2,6 +2,7 @@ import click
 
 from .metadata import metadata
 from .models.group_manga import group_manga
+from .models.manga import manga
 from .models.tag_rules import tag_rules
 from .parquet import parquet
 from .sync import sync
@@ -13,7 +14,7 @@ def models():
     pass
 
 
-for cmd in [tag_rules, group_manga]:
+for cmd in [tag_rules, group_manga, manga]:
     models.add_command(cmd)
 
 
