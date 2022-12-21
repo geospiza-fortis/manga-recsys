@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import click
+import ndjson
 import tqdm
 from pyspark.sql import functions as F
 
@@ -46,6 +47,7 @@ def consolidate_json(path):
 
 def write_df(df, path):
     path = Path(path)
+    print(f"Writing to {path}")
     parted = df.repartition(1).cache()
     parted.write.parquet(path.as_posix(), mode="overwrite")
     consolidate_parquet(path)
@@ -57,10 +59,8 @@ def write_df(df, path):
 def _rewrite_spark_json_partition(path, compress):
     # parse the uid column from the pathname
     uid_col, uid = path.parts[-2].split("=")
-    rows = []
-    for line in path.read_text(encoding="utf8").strip().splitlines():
-        rows.append({uid_col: uid, **json.loads(line)})
-
+    rows = ndjson.loads(path.read_text(encoding="utf-8"))
+    rows = [{uid_col: uid, **row} for row in rows]
     json_data = json.dumps(rows)
     # write gzip to disk
     out = Path(path.parent.parent / f"{uid}.json")
@@ -72,6 +72,7 @@ def _rewrite_spark_json_partition(path, compress):
 
 def write_df_per_uid(df, path, uid_col, compress=True, parallelism=8):
     path = Path(path)
+    print(f"Writing to {path}")
     path.mkdir(parents=True, exist_ok=True)
     # write by partition to disk, include index column
     df.repartition(uid_col).write.partitionBy(uid_col).json(

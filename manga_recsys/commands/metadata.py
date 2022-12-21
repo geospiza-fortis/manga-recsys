@@ -144,6 +144,10 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
         .join(manga_tags, "id", how="left")
     )
 
+    manga_info_slim = manga_info.drop(
+        "description", "tags", "availableTranslatedLanguages"
+    )
+
     group_info = group.select(
         "id",
         "attributes.name",
@@ -163,6 +167,8 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
     manga_info.printSchema()
     manga_info.show()
 
+    manga_info_slim.printSchema()
+
     output = Path(output)
     gz_output = Path("/".join([output.parts[0], "gz", *output.parts[1:]]))
 
@@ -174,3 +180,5 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
     write_df_per_uid(group_info, gz_output / "group_info", "id", cores)
     write_df(manga_info, output / "manga_info")
     write_df_per_uid(manga_info, gz_output / "manga_info", "id", cores)
+
+    write_df(manga_info_slim, output / "manga_info_slim")
