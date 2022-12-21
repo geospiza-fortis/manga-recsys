@@ -9,3 +9,4 @@ Feel free to reach out with questions or comments on the MangaDex or Tachiyomi d
 - [manga](./manga)
   - [explore](./manga/explore)
 - [data](./data)
+- [openapi](./openapi)

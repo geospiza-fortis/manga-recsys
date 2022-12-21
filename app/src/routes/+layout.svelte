@@ -1,5 +1,5 @@
 <script>
-  let entries = ["home", "tag-rules", "groups", "manga", "data"];
+  let entries = ["home", "tag-rules", "groups", "manga", "data", "openapi"];
 </script>
 
 <main>
