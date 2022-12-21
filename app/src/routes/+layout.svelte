@@ -10,6 +10,9 @@
         <span />
       {/each}
     </div>
+    <div>
+      <span>build {"__BUILD_TIME__"}</span>
+    </div>
   </nav>
   <slot />
 </main>
@@ -29,5 +32,11 @@
     main {
       padding: 0 0.5rem;
     }
+  }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap-reverse;
   }
 </style>

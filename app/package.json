@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.0.1",
+  "version": "0.8.0",
   "private": true,
   "scripts": {
     "dev": "vite dev",
@@ -10,6 +10,7 @@
     "format": "prettier --plugin-search-dir . --write ."
   },
   "devDependencies": {
+    "@rollup/plugin-replace": "^5.0.2",
     "@sveltejs/adapter-node": "^1.0.0",
     "@sveltejs/kit": "^1.0.0",
     "mdsvex": "^0.10.6",
