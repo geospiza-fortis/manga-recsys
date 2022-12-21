@@ -144,8 +144,8 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
         .join(manga_tags, "id", how="left")
     )
 
-    manga_info_slim = manga_info.drop(
-        "description", "tags", "availableTranslatedLanguages"
+    manga_info_slim = manga_info.select(
+        "id", "name", "createdAt", "chapter_count", "page_count"
     )
 
     group_info = group.select(

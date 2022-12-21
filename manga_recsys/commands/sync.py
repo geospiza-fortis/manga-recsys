@@ -46,12 +46,7 @@ def upload_gz(overwrite, delete, cores):
     input_path = Path("data/")
     assert input_path.exists() and input_path.is_dir(), "data directory not found"
 
-    # compress json files that are smaller than 10mb
-    should_compress = [
-        p
-        for p in input_path.glob("**/*.json")
-        if p.parts[1] != "gz" and p.stat().st_size < 10_000_000
-    ]
+    should_compress = [p for p in input_path.glob("**/*.json") if p.parts[1] != "gz"]
     if not overwrite:
         should_compress = [
             p

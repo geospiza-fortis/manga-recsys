@@ -3,25 +3,25 @@ import "tippy.js/dist/tippy.css";
 import GroupInfo from "$lib/GroupInfo.svelte";
 import MangaInfo from "$lib/MangaInfo.svelte";
 
-function tippyGroupInfo(row, tippyProps = {}) {
+function tippyGroupInfo(row, tippyProps = {}, id_col = "group_id") {
   // create a new tippy instance for the row
   let instance = tippy(row.getElement(), tippyProps);
   new GroupInfo({
     // get element from popper instance that has class tippy-content
     target: instance.popper.querySelector(".tippy-content"),
     props: {
-      group_id: row.getData().group_id
+      group_id: row.getData()[id_col]
     }
   });
 }
 
-function tippyMangaInfo(row, tippyProps = {}) {
+function tippyMangaInfo(row, tippyProps = {}, id_col = "manga_id") {
   let instance = tippy(row.getElement(), tippyProps);
   new MangaInfo({
     // get element from popper instance that has class tippy-content
     target: instance.popper.querySelector(".tippy-content"),
     props: {
-      manga_id: row.getData().manga_id
+      manga_id: row.getData()[id_col]
     }
   });
 }
