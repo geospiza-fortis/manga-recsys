@@ -6,7 +6,7 @@ info:
 servers:
   - url: https://manga-recsys.geospiza.me
     description: Production instance
-  - url: http://localhost:4000
+  - url: http://localhost:5173
     description: Local docker-compose instance
 paths:
   /:
@@ -19,3 +19,10 @@ paths:
             text/html; charset=utf-8:
               schema:
                 type: string
+  /api/v1/models/tag-rules/association_rules.json:
+    get:
+      summary: association rules
+  /api/v1/models/tag-rules/freq_itemsets.json:
+    get:
+      summary: frequent itemsets
+  # TODO: metadata, group-manga, manga-tags-word2vec
