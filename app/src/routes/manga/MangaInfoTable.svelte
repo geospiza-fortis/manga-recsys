@@ -14,11 +14,7 @@
     paginationSize: 10,
     paginationCounter: "rows",
     selectable: 1,
-    initialSort: [
-      // { column: "search_relevance", dir: "asc" }
-      // TODO: initial sort with two columns is broken
-      // { column: "manga_count", dir: "desc" }
-    ],
+    initialSort: [{ column: "chapter_count", dir: "desc" }],
     autoColumnsDefinitions: [
       { field: "id", visible: false },
       {
@@ -45,4 +41,4 @@
 </script>
 
 <Table {data} {options} bind:table />
-<TableFuseHeaderFilter {data} {table} headerFilterCol={"name"} />
+<TableFuseHeaderFilter {data} {table} {options} headerFilterCol={"name"} />
