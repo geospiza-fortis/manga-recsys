@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: manga-recsys
   description: API routes for recommendation
-  version: 1.0.0
+  version: 0.8.0
 servers:
   - url: https://manga-recsys.geospiza.me
     description: Production instance
