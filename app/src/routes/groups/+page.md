@@ -6,7 +6,7 @@
   let selected_group_id = null;
 </script>
 
-# scanlation groups
+# groups
 
 A scanlation group is a group of people who translate manga into their own language.
 
