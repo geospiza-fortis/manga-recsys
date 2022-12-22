@@ -10,6 +10,10 @@ Note that this page may take some time to load.
 
 ## notes
 
+### table of contents
+
+### overview
+
 We've reached the point where we can finally build a reasonable model for making content recommendations.
 As noted in the [groups notes](/groups), there are two main recommendation models.
 The first is collaborative filtering models that rely on implicit user interactions (e.g., favoriting a series).
