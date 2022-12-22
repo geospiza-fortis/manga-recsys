@@ -3,6 +3,8 @@ steps:
     entrypoint: "bash"
     args:
       ["-c", "docker pull gcr.io/$PROJECT_ID/$REPO_NAME-app:latest || exit 0"]
+    waitFor: ["-"]
+    id: pull-app
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
@@ -17,8 +19,12 @@ steps:
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         ".",
       ]
+    waitFor: [pull-app]
+    id: build-app
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest"]
+    waitFor: [build-app]
+    id: push-app
   - name: "gcr.io/cloud-builders/gcloud"
     args:
       [
@@ -32,10 +38,15 @@ steps:
         "--platform",
         "managed",
       ]
+    waitFor: [push-app]
+    id: deploy-app
+
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       ["-c", "docker pull gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest || exit 0"]
+    waitFor: ["-"]
+    id: pull-sys
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
@@ -48,8 +59,12 @@ steps:
         "gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest",
         ".",
       ]
+    waitFor: [pull-sys]
+    id: build-sys
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest"]
+    waitFor: [build-sys]
+    id: push-sys
 images:
   [
     "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
