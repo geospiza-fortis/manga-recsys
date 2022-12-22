@@ -7,7 +7,7 @@ steps:
       [
         "build",
         "-f",
-        "docker/Dockerfile.app",
+        "./docker/Dockerfile.app",
         "-t",
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         "--build-arg",
