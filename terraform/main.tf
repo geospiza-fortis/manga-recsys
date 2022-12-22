@@ -126,3 +126,38 @@ resource "google_cloud_run_service_iam_member" "all-users" {
 output "service_url" {
   value = google_cloud_run_v2_service.default.uri
 }
+
+// add a cloud run job
+resource "google_cloud_run_v2_job" "sync-tar-to-gz" {
+  name         = "sync-tar-to-gz"
+  location     = local.region
+  launch_stage = "BETA"
+
+  template {
+    parallelism = 1
+    task_count  = 1
+    template {
+      max_retries = 0
+      timeout     = "600s"
+      containers {
+        image = "gcr.io/${local.project_id}/${local.repo_name}-sys:latest"
+        command = [
+          "bash", "-c",
+        ]
+        args = [
+          // use a here document to write out the script
+          <<EOF
+            mkdir -p data/tar/ &&
+            manga-recsys sync download --path data/tar/
+          EOF
+        ]
+        resources {
+          limits = {
+            cpu    = "2000m"
+            memory = "2Gi"
+          }
+        }
+      }
+    }
+  }
+}

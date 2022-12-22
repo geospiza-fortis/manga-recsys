@@ -18,5 +18,8 @@ RUN poetry config virtualenvs.create false
 COPY ./poetry.lock ./pyproject.toml ./
 RUN poetry install --no-root
 
+# edit path with google cloud sdk
+ENV PATH="/root/google-cloud-sdk/bin:${PATH}"
+
 COPY ./ ./
 RUN poetry install
