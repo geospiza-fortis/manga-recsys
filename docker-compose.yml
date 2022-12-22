@@ -12,6 +12,7 @@ services:
   app:
     build:
       dockerfile: docker/Dockerfile.app
+    image: gcr.io/manga-recsys/manga-recsys-app:latest
     volumes:
       - ./app:/app
       - node_modules:/app/node_modules
@@ -31,3 +32,9 @@ services:
       - SPEC_URL=openapi/openapi.yaml
     ports:
       - "4001:80"
+  # we also include a system image that we can use for running gcloud commands
+  # or the other recommendation utilities
+  sys:
+    build:
+      dockerfile: docker/Dockerfile.sys
+    image: gcr.io/manga-recsys/manga-recsys-sys:latest

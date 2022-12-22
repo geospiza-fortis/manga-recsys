@@ -1,0 +1,22 @@
+FROM ubuntu:22.04
+
+RUN apt-get -y update && \
+    apt-get -y install \
+    wget \
+    curl \
+    python3 \
+    python3-pip \
+    git \
+    default-jre
+
+# install google cloud sdk
+RUN curl -sSL https://sdk.cloud.google.com | bash
+
+WORKDIR /app
+RUN pip install poetry
+RUN poetry config virtualenvs.create false
+COPY ./poetry.lock ./pyproject.toml ./
+RUN poetry install --no-root
+
+COPY ./ ./
+RUN poetry install
