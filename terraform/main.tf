@@ -104,7 +104,7 @@ resource "google_cloud_run_v2_service" "default" {
       max_instance_count = 20
     }
     containers {
-      image = "gcr.io/${local.project_id}/${local.repo_name}:latest"
+      image = "gcr.io/${local.project_id}/${local.repo_name}-app:latest"
     }
   }
 
