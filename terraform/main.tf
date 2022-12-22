@@ -148,13 +148,15 @@ resource "google_cloud_run_v2_job" "sync-tar-to-gz" {
           // use a here document to write out the script
           <<EOF
             mkdir -p data/tar/ &&
-            manga-recsys sync download --path data/tar/
+            manga-recsys sync download --path data/tar/ &&
+            manga-recsys sync untar-gz --cores 4 &&
+            manga-recsys sync upload-gz
           EOF
         ]
         resources {
           limits = {
-            cpu    = "2000m"
-            memory = "2Gi"
+            cpu    = "4000m"
+            memory = "4Gi"
           }
         }
       }

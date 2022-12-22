@@ -38,3 +38,5 @@ services:
     build:
       dockerfile: docker/Dockerfile.sys
     image: gcr.io/manga-recsys/manga-recsys-sys:latest
+    volumes:
+      - ${GCLOUD_CONFIG_PATH:-~/.config/gcloud}:/root/.config/gcloud

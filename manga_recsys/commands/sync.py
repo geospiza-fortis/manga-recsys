@@ -199,6 +199,7 @@ def upload_gz(overwrite, delete, cores):
             "gs://manga-recsys/data/gz/",
         ],
         shell=True,
+        check=True,
     )
 
 
@@ -229,7 +230,7 @@ def upload(delete):
             f"gs://manga-recsys/{path.as_posix()}/",
         ]
         print(" ".join(cmd))
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, shell=True, check=True)
 
 
 @sync.command()
@@ -244,10 +245,10 @@ def download(path):
         "-m",
         "rsync",
         "-x",
-        "^gz",
+        "'^gz'",
         "-r",
         f"gs://manga-recsys/{path}",
         f"{path}",
     ]
     print(" ".join(cmd))
-    subprocess.run(cmd, shell=True)
+    subprocess.run(cmd, shell=True, check=True)
