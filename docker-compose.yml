@@ -22,3 +22,12 @@ services:
       - nginx
     environment:
       - VITE_STATIC_HOST=http://nginx:4000
+  redoc:
+    image: redocly/redoc
+    restart: always
+    volumes:
+      - ./app/static/openapi/:/usr/share/nginx/html/openapi/
+    environment:
+      - SPEC_URL=openapi/openapi.yaml
+    ports:
+      - "4001:80"

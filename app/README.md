@@ -27,12 +27,3 @@ npm run build
 ```
 
 You can preview the production build with `npm run preview`.
-
-### testing openapi
-
-Use [schemathesis](https://github.com/schemathesis/schemathesis) to test the openapi spec.
-If you are simply developing against the production service, you can use the following command:
-
-```bash
-st run --checks all static/openapi/openapi.yaml --base-url https://manga-recsys.geospiza.me
-```

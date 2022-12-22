@@ -19,6 +19,27 @@ Use the `docker compose` stack to run the application.
 docker compose up
 ```
 
+### testing openapi
+
+The openapi spec is found at [app/static/openapi](app/static/openapi).
+
+The spec is rendered via redoc on http://localhost:5173/openapi.
+A separate instance of redoc is available on http://localhost:4001.
+On platforms other than Windows, the standalone redoc instance should provide hot-reloading.
+
+Use [schemathesis](https://github.com/schemathesis/schemathesis) to test the openapi spec.
+If you are simply developing against the production service, you can use the following command without any dependencies:
+
+```bash
+st run --checks all https://manga-recsys.geospiza.me/openapi/openapi.yaml --base-url https://manga-recsys.geospiza.me
+```
+
+If you are developing locally, use the following command:
+
+```bash
+st run --checks all http://localhost:5173/openapi/openapi.yaml --base-url http://localhost:5173
+```
+
 ## notes
 
 ### scraping
