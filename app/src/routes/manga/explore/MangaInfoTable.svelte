@@ -25,7 +25,11 @@
         formatter: "link",
         formatterParams: {
           urlPrefix: "https://mangadex.org/manga/",
-          labelField: "name",
+          // get row from cell
+          label: (cell) => {
+            const rowData = cell.getRow().getData();
+            return rowData.name || rowData.id;
+          },
           urlField: "id",
           target: "_blank"
         }

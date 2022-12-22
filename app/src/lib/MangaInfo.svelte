@@ -18,7 +18,7 @@
 
 <div bind:this={element}>
   {#if data}
-    <h2>{data.name}</h2>
+    <h2>{data.name || data.id}</h2>
     <!-- Created at yyyy-mm-dd, updated at yyyy-mm-dd -->
     <i>Created {data.createdAt.substring(0, 10)}, updated {data.updatedAt.substring(0, 10)}</i>
     <p>
