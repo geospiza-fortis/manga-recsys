@@ -1,10 +1,10 @@
 FROM node:18
 
 WORKDIR /app
-COPY package* ./
+COPY ../app/package* ./
 RUN npm install
 
-COPY . ./
+COPY ../app ./
 
 # NOTE: this should point the static files
 ARG VITE_STATIC_HOST=https://nginx:4000

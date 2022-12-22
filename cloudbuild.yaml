@@ -6,27 +6,31 @@ steps:
     args:
       [
         "build",
+        "-f",
+        "docker/Dockerfile.app",
         "-t",
-        "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
+        "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         "--build-arg",
         "VITE_STATIC_HOST=${_VITE_STATIC_HOST}",
         "--cache-from",
-        "gcr.io/$PROJECT_ID/$REPO_NAME:latest",
+        "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         "app",
       ]
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME:latest"]
+    args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest"]
   - name: "gcr.io/cloud-builders/gcloud"
     args:
-      - "run"
-      - "deploy"
-      - "$REPO_NAME"
-      - "--image"
-      - "gcr.io/$PROJECT_ID/$REPO_NAME:latest"
-      - "--region"
-      - "${_REGION}"
-      - "--platform"
-      - "managed"
-images: ["gcr.io/$PROJECT_ID/$REPO_NAME:latest"]
+      [
+        "run",
+        "deploy",
+        "$REPO_NAME",
+        "--image",
+        "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
+        "--region",
+        "${_REGION}",
+        "--platform",
+        "managed",
+      ]
+images: ["gcr.io/$PROJECT_ID/$REPO_NAME-app:latest"]
 options:
   logging: CLOUD_LOGGING_ONLY
