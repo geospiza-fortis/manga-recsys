@@ -14,6 +14,7 @@ steps:
         "VITE_STATIC_HOST=${_VITE_STATIC_HOST}",
         "--cache-from",
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
+        ".",
       ]
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest"]
