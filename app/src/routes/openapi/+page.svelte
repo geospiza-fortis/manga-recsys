@@ -15,4 +15,4 @@
   {/if}
 </svelte:head>
 
-<div bind:this={container} />
+<div class="redoc" bind:this={container} />
