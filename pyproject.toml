@@ -28,6 +28,7 @@ jupyterlab = "^3.5.1"
 black = { version = "^22.12.0", allow-prereleases = true }
 nb-black = "^1.0.7"
 pytest = "^7.2.0"
+schemathesis = "^3.17.5"
 
 [tool.poetry.scripts]
 manga-recsys = "manga_recsys.commands:cli"

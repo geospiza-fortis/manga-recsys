@@ -8,6 +8,17 @@ There are other projects out there; this one is primarily for learning and fun.
 - https://github.com/similar-manga/similar
 - https://github.com/CarlosEsco/Neko
 
+## quickstart
+
+To get started, copy the `.env.example` file to `.env` and fill in the appropriate values.
+If you do not have a copy of the data directory, you can set the nginx container to serve static files from the cloud bucket.
+
+Use the `docker compose` stack to run the application.
+
+```bash
+docker compose up
+```
+
 ## notes
 
 ### scraping
