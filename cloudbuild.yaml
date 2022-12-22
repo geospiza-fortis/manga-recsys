@@ -31,6 +31,24 @@ steps:
         "--platform",
         "managed",
       ]
-images: ["gcr.io/$PROJECT_ID/$REPO_NAME-app:latest"]
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-f",
+        "docker/Dockerfile.sys",
+        "-t",
+        "gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest",
+        "--cache-from",
+        "gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest",
+        ".",
+      ]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest"]
+images:
+  [
+    "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
+    "gcr.io/$PROJECT_ID/$REPO_NAME-sys:latest",
+  ]
 options:
   logging: CLOUD_LOGGING_ONLY
