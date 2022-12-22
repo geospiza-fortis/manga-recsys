@@ -2,7 +2,20 @@
 // currently a mess while I play around with different models, and having this
 // redirection layer (even at the cost of more requests), allows me to change
 // the underlying structure without breaking the front-end.
-import { build_path } from "$lib/data.js";
+import { browser, dev } from "$app/environment";
+
+export function build_path(path, client = false) {
+  let base_url = import.meta.env.VITE_STATIC_HOST;
+  // get current port
+  // Replace nginx with localhost if we're running in the browser and in
+  // development mode. This assumes that we're running via the docker compose
+  // setup.
+  if ((browser && dev) || client) {
+    base_url = base_url.replace("nginx", "localhost");
+  }
+  return `${base_url}/${path}`;
+}
+
 const mapping = {
   "data/manga.parquet": "data/processed/2022-12-10-mangadex-manga.parquet",
   "data/chapter.parquet": "data/processed/2022-12-16-mangadex-chapter.parquet",
