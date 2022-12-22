@@ -48,23 +48,11 @@ A list of all manga uuids (as of 2022-12-10) was graciously provided by tristan9
 If we do need to scrape this from scratch, we filter using the `createdAtSince` parameter and paginate according to limits set by the api.
 
 ```bash
-# -a limit=10 for testing
-scrapy runspider manga_recsys/scrapy/manga.py -a path=data/raw/2022-12-10-mangadex-uuid.csv -o data/raw/2022-12-10-mangadex-manga.ndjson -t jsonlines
+#  for testing
+scrapy runspider manga_recsys/scrapy/manga.py -a path=data/raw/2022-12-10-mangadex-uuid.csv -o data/raw/2022-12-10-mangadex-manga.ndjson -t jsonlines -a limit=10
 
-python scripts/estimate_scrape_time.py 65737 data/raw/2022-12-10-mangadex-manga.ndjson --polling-interval 5 --model-interval 15
-```
-
-Here's the scraping for all of the chapters
-
-```bash
 scrapy runspider manga_recsys/scrapy/chapter.py -a path=data/raw/2022-12-10-mangadex-uuid.csv -o data/raw/2022-12-16-mangadex-chapter.ndjson -t jsonlines -a limit=10
 
-for (;;) { Get-Date -format o; cat data/raw/2022-12-16-mangadex-chapter.ndjson | wc; sleep 30; }
-```
-
-And here's scraping for scan groups:
-
-```bash
 scrapy runspider manga_recsys/scrapy/group.py -a path=data/processed/2022-12-16-mangadex-chapter.parquet -o data/raw/2022-12-17-mangadex-group.ndjson -t jsonlines -a limit=10
 ```
 
