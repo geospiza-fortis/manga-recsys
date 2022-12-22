@@ -4,6 +4,8 @@ This page contains scraped and processed data from MangaDex.
 The schemas are applicable to the parquet datasets
 Minor structural transformations have been applied to make it easier to process that data via PySpark.
 
+## table of contents
+
 ## manga
 
 Download link:
