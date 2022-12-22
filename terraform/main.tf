@@ -147,7 +147,6 @@ resource "google_cloud_run_v2_job" "sync-tar-to-gz" {
         args = [
           // use a here document to write out the script
           <<EOF
-            mkdir -p data/tar/ &&
             manga-recsys sync download --path data/tar/ &&
             manga-recsys sync untar-gz --cores 4 &&
             manga-recsys sync upload-gz

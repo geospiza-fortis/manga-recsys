@@ -100,7 +100,10 @@ def untar_big_directories(root, output, parallelism=8):
                 total=len(tar_paths),
             ),
         )
-    other_paths = [p for p in root.glob("**/*") if p not in tar_paths]
+    other_paths = [p for p in root.glob("**/*") if p not in tar_paths and p.is_file()]
+    # make sure the parent directories exist
+    for p in other_paths:
+        (output / p.relative_to(root)).parent.mkdir(parents=True, exist_ok=True)
     with Pool(parallelism) as p:
         p.starmap(
             shutil.copy,
@@ -163,13 +166,18 @@ def tar_gz(cores):
 
 
 @sync.command()
+@click.option(
+    "--overwrite/--no-overwrite", default=False, help="Overwrite existing files"
+)
 @click.option("--output", default="data/gz", help="Output directory for gz files")
 @click.option("--cores", default=8, help="Number of cores to use during compression")
-def untar_gz(output, cores):
+def untar_gz(overwrite, output, cores):
     """Untar the gz folder."""
     # exit early if gz folder already exists
+    if Path(output).exists() and not overwrite:
+        raise ValueError("gz folder already exists")
     if Path(output).exists():
-        return
+        shutil.rmtree(output)
     untar_big_directories(Path("data/tar"), Path(output), parallelism=cores)
 
 
@@ -186,7 +194,7 @@ def upload_gz(overwrite, delete, cores):
     assert input_path.exists() and input_path.is_dir(), "data directory not found"
 
     _compress_data(input_path, overwrite, cores)
-    subprocess.run(
+    cmd = " ".join(
         [
             "gsutil",
             "-m",
@@ -197,10 +205,9 @@ def upload_gz(overwrite, delete, cores):
             "-r",
             "data/gz/",
             "gs://manga-recsys/data/gz/",
-        ],
-        shell=True,
-        check=True,
+        ]
     )
+    subprocess.run(cmd, shell=True, check=True)
 
 
 @sync.command()
@@ -220,16 +227,14 @@ def upload(delete):
             continue
         if path.name == "gz":
             continue
-        cmd = [
-            "gsutil",
-            "-m",
-            "rsync",
-            *(["-d"] if delete else []),
-            "-r",
-            f"{path.as_posix()}/",
-            f"gs://manga-recsys/{path.as_posix()}/",
-        ]
-        print(" ".join(cmd))
+        cmd = " ".join(
+            [
+                "gsutil -m rsync",
+                *(["-d"] if delete else []),
+                f"-r {path}/ gs://manga-recsys/{path}/",
+            ]
+        )
+        print(cmd)
         subprocess.run(cmd, shell=True, check=True)
 
 
@@ -239,16 +244,7 @@ def download(path):
     """Download remote data to the local storage bucket."""
     assert path.endswith("/"), "path must end with a slash"
     assert path.startswith("data/"), "path must start with data/"
-    assert Path(path).exists(), "data directory not found"
-    cmd = [
-        "gsutil",
-        "-m",
-        "rsync",
-        "-x",
-        "'^gz'",
-        "-r",
-        f"gs://manga-recsys/{path}",
-        f"{path}",
-    ]
-    print(" ".join(cmd))
+    Path(path).mkdir(parents=True, exist_ok=True)
+    cmd = f'gsutil -m rsync -x "^gz" -r gs://manga-recsys/{path} {path}'
+    print(cmd)
     subprocess.run(cmd, shell=True, check=True)
