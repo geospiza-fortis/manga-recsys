@@ -19,6 +19,101 @@ import click
 import tqdm
 
 
+def tar_big_directories(root, output, threshold=100, parallelism=8):
+    """We tarball directories that have more than 100 files and copy this into a
+    separate directory.
+
+    We'll need to create an inverse of this function in order to actually deploy
+    on the cloud.
+    """
+    directories_to_tar = []
+    for path in root.glob("**/"):
+        if path.is_file():
+            continue
+        if len(list(path.glob("*"))) > threshold:
+            directories_to_tar.append(path)
+
+    # now create the set of files to copy over as-is
+    files_to_copy = []
+    for path in root.glob("**/*"):
+        if path.is_dir():
+            continue
+        if path.parent not in directories_to_tar:
+            files_to_copy.append(path)
+
+    # in parallel, tar the directories into the output directory
+    print("tarring directories")
+    with Pool(parallelism) as p:
+        p.starmap(
+            shutil.make_archive,
+            tqdm.tqdm(
+                [
+                    (
+                        (output / p.relative_to(root)).as_posix(),
+                        "tar",
+                        p.as_posix(),
+                    )
+                    for p in directories_to_tar
+                ],
+                total=len(directories_to_tar),
+            ),
+        )
+
+    # now in parallel, copy the files into the output directory
+    print("copying files")
+    # first make all the directories that dont exist
+    for p in files_to_copy:
+        (output / p.relative_to(root)).parent.mkdir(parents=True, exist_ok=True)
+    with Pool(parallelism) as p:
+        p.starmap(
+            shutil.copy,
+            tqdm.tqdm(
+                [
+                    (p.as_posix(), (output / p.relative_to(root)).as_posix())
+                    for p in files_to_copy
+                ],
+                total=len(files_to_copy),
+            ),
+        )
+
+
+def untar_big_directories(root, output, parallelism=8):
+    """Untar the directories that were tarred in the root directory into the
+    output directory.
+    """
+    # first, untar the directories
+    tar_paths = [p for p in root.glob("**/*.tar")]
+    with Pool(parallelism) as p:
+        p.starmap(
+            shutil.unpack_archive,
+            # make sure to create a new directory with the tarball name
+            tqdm.tqdm(
+                [
+                    (
+                        p.as_posix(),
+                        (
+                            output / p.relative_to(root).as_posix().replace(".tar", "")
+                        ).as_posix(),
+                    )
+                    for p in tar_paths
+                ],
+                total=len(tar_paths),
+            ),
+        )
+    other_paths = [p for p in root.glob("**/*") if p not in tar_paths]
+    with Pool(parallelism) as p:
+        p.starmap(
+            shutil.copy,
+            tqdm.tqdm(
+                [
+                    (p.as_posix(), (output / p.relative_to(root)).as_posix())
+                    for p in other_paths
+                ],
+                total=len(other_paths),
+            ),
+        )
+
+
 def gzip_file(input_path, output_path):
     """Compress a file using Python's gzip module."""
     # ensure output path exists
@@ -32,6 +127,24 @@ def gzip_file(input_path, output_path):
 def sync():
     """Synchronize local data with the remote storage bucket."""
     pass
+
+
+@sync.command()
+@click.option("--cores", default=8, help="Number of cores to use during compression")
+def tar_gz(cores):
+    """Create a tar directory of the gz folder. Must be untarred to be synced."""
+    tar_big_directories(Path("data/gz"), Path("data/tar"), parallelism=cores)
+
+
+@sync.command()
+@click.option("--output", default="data/gz", help="Output directory for gz files")
+@click.option("--cores", default=8, help="Number of cores to use during compression")
+def untar_gz(output, cores):
+    """Untar the gz folder."""
+    # exit early if gz folder already exists
+    if Path(output).exists():
+        return
+    untar_big_directories(Path("data/tar"), Path(output), parallelism=cores)
 
 
 @sync.command()
