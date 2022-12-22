@@ -123,6 +123,31 @@ def gzip_file(input_path, output_path):
             shutil.copyfileobj(f_in, f_out)
 
 
+def _compress_data(data_root, overwrite=True, cores=8):
+    should_compress = [
+        p for p in data_root.glob("**/*.json") if p.parts[1] not in ["gz", "tar"]
+    ]
+    if not overwrite:
+        should_compress = [
+            p
+            for p in should_compress
+            if not (data_root / "gz" / p.relative_to(data_root)).exists()
+        ]
+    with Pool(cores) as p:
+        p.starmap(
+            gzip_file,
+            tqdm.tqdm(
+                [
+                    (
+                        p.as_posix(),
+                        (data_root / "gz" / p.relative_to(data_root)).as_posix(),
+                    )
+                    for p in should_compress
+                ]
+            ),
+        )
+
+
 @click.group()
 def sync():
     """Synchronize local data with the remote storage bucket."""
@@ -133,6 +158,7 @@ def sync():
 @click.option("--cores", default=8, help="Number of cores to use during compression")
 def tar_gz(cores):
     """Create a tar directory of the gz folder. Must be untarred to be synced."""
+    _compress_data(Path("data/"), True, cores)
     tar_big_directories(Path("data/gz"), Path("data/tar"), parallelism=cores)
 
 
@@ -159,26 +185,7 @@ def upload_gz(overwrite, delete, cores):
     input_path = Path("data/")
     assert input_path.exists() and input_path.is_dir(), "data directory not found"
 
-    should_compress = [p for p in input_path.glob("**/*.json") if p.parts[1] != "gz"]
-    if not overwrite:
-        should_compress = [
-            p
-            for p in should_compress
-            if not (input_path / "gz" / p.relative_to(input_path)).exists()
-        ]
-    with Pool(cores) as p:
-        p.starmap(
-            gzip_file,
-            tqdm.tqdm(
-                [
-                    (
-                        p.as_posix(),
-                        (input_path / "gz" / p.relative_to(input_path)).as_posix(),
-                    )
-                    for p in should_compress
-                ]
-            ),
-        )
+    _compress_data(input_path, overwrite, cores)
     subprocess.run(
         [
             "gsutil",
@@ -226,9 +233,12 @@ def upload(delete):
 
 
 @sync.command()
-def download():
+@click.option("--path", default="data/", help="Path to local data directory")
+def download(path):
     """Download remote data to the local storage bucket."""
-    assert Path("data/").exists(), "data directory not found"
+    assert path.endswith("/"), "path must end with a slash"
+    assert path.startswith("data/"), "path must start with data/"
+    assert Path(path).exists(), "data directory not found"
     cmd = [
         "gsutil",
         "-m",
@@ -236,8 +246,8 @@ def download():
         "-x",
         "^gz",
         "-r",
-        "gs://manga-recsys/data/",
-        "data/",
+        f"gs://manga-recsys/{path}",
+        f"{path}",
     ]
     print(" ".join(cmd))
     subprocess.run(cmd, shell=True)
