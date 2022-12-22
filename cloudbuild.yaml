@@ -7,14 +7,13 @@ steps:
       [
         "build",
         "-f",
-        "./docker/Dockerfile.app",
+        "docker/Dockerfile.app",
         "-t",
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         "--build-arg",
         "VITE_STATIC_HOST=${_VITE_STATIC_HOST}",
         "--cache-from",
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
-        "app",
       ]
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest"]
