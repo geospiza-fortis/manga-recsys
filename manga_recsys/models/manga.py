@@ -39,6 +39,7 @@ def generate_manga_tags_word2vec(
     vector_col: str = "w2v",
     vector_size: int = 16,
     workers: int = 8,
+    return_model: bool = False,
 ) -> pd.DataFrame:
     """Add an averaged wordvector as a feature to the manga_tags dataframe."""
     manga_tags = get_manga_tags(manga_info).toPandas()
@@ -51,7 +52,10 @@ def generate_manga_tags_word2vec(
     manga_tags[vector_col] = manga_tags.tags.apply(
         partial(average_tag_vectors, tags_model)
     )
-    return manga_tags
+    if return_model:
+        return manga_tags, tags_model
+    else:
+        return manga_tags
 
 
 def get_closest(index, mapping, k, query_vector):
