@@ -1,10 +1,14 @@
 from functools import partial
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyspark.sql
-from gensim.models import Word2Vec
+from gensim import corpora
+from gensim.matutils import corpus2dense
+from gensim.models import LsiModel, TfidfModel, Word2Vec
 from pynndescent import NNDescent
+from pyspark.sql import Window
 from pyspark.sql import functions as F
 
 
@@ -54,6 +58,33 @@ def generate_manga_tags_word2vec(
     )
     if return_model:
         return manga_tags, tags_model
+    else:
+        return manga_tags
+
+
+def generate_manga_tags_tfidf_lsi(
+    manga_info: pyspark.sql.DataFrame,
+    vector_col: str = "lsi",
+    vector_size: int = 16,
+    return_model: bool = False,
+) -> pd.DataFrame:
+    """Add an averaged wordvector as a feature to the manga_tags dataframe."""
+    manga_tags = get_manga_tags(manga_info).toPandas()
+
+    # generate the word2vec model using cbow
+    dictionary = corpora.Dictionary(manga_tags.tags)
+    corpus = [dictionary.doc2bow(text) for text in manga_tags.tags]
+    tfidf = TfidfModel(corpus)
+    corpus_tfidf = tfidf[corpus]
+
+    lsi = LsiModel(corpus_tfidf, id2word=dictionary, num_topics=vector_size)
+
+    # add features to the manga_tags dataframe to start making recommendations
+    manga_tags[vector_col] = corpus2dense(
+        lsi[corpus_tfidf], num_terms=vector_size
+    ).T.tolist()
+    if return_model:
+        return manga_tags, (tfidf, lsi)
     else:
         return manga_tags
 
@@ -123,3 +154,107 @@ def map_names_to_recommendations(
         .select("id", "name", "rec_id", "rec_name", "distance")
         .orderBy("id", "distance")
     )
+
+
+# keep only manga that contains the following tag
+def recs_with_secondary_tag(
+    spark: pyspark.sql.SparkSession,
+    recs: pd.DataFrame,
+    manga_tags: pyspark.sql.DataFrame,
+    primary_tag: str,
+    k_tags: int = 5,
+    pre_filter_primary: bool = True,
+    post_filter_primary: bool = True,
+    verbose: bool = True,
+):
+    """Get a secondary tag based on the tags of the neighbors.
+
+    Optionally filter down the recommendations to only include manga that have
+    the primary tag.
+    """
+
+    if pre_filter_primary:
+        recs = (
+            spark.createDataFrame(recs)
+            .where(F.array_contains("tags", primary_tag))
+            .toPandas()
+        )
+
+    # get the most common tag from each neighbor
+    # this is a type of belief propagation algorithm
+    tag_mode = (
+        explode_recommendations(spark, recs)
+        .join(
+            manga_tags.select("id", "tags").withColumnRenamed("id", "rec_id"),
+            on="rec_id",
+        )
+        .withColumn("tag", F.explode("tags"))
+        .groupBy("id", "tag")
+        .count()
+        .where(F.col("tag") != primary_tag)
+        # now keep the most common tag for each manga
+        .withColumn(
+            "rank",
+            F.rank().over(
+                Window.partitionBy("id").orderBy(F.col("count").desc(), F.col("tag"))
+            ),
+        )
+        .where(F.col("rank") == 1)
+        .drop("rank")
+        # now only keep rows that have a primary tag
+    )
+
+    # keep the top 5 tags, otherwise label it as "other"
+    top_tags = (
+        tag_mode.groupBy("tag")
+        .count()
+        .orderBy(F.col("count").desc())
+        .limit(k_tags)
+        .drop("count")
+        .withColumn("common", F.lit(True))
+    )
+
+    tag_common = (
+        tag_mode.join(top_tags, on="tag", how="left")
+        .fillna(False, subset=["common"])
+        .withColumn("tag", F.when(F.col("common"), F.col("tag")).otherwise("Other"))
+        .drop("common")
+    )
+
+    df = spark.createDataFrame(recs).join(tag_common, on="id", how="left")
+    if post_filter_primary:
+        df = df.where(F.array_contains("tags", primary_tag))
+
+    if verbose:
+        df.groupBy("tag").count().orderBy(F.col("count").desc()).show(n=10)
+        df.show(n=5)
+        print("final count", df.count())
+    return df.toPandas()
+
+
+def plot_recommendation_2d(df, vector_col, reducer, title, sample=None):
+    if sample is not None:
+        df = df.sample(sample)
+    manga_vectors_2d = reducer.fit_transform(np.stack(df[vector_col]))
+
+    # add color map for the tag using convention
+    tag_freq = df.groupby("tag").count().sort_values("id", ascending=False)
+    color_map = {tag: f"C{i}" for i, tag in enumerate(tag_freq.index)}
+    # print(tag_freq)
+    # print(color_map)
+
+    _, ax = plt.subplots(figsize=(8, 8))
+    ax.scatter(
+        manga_vectors_2d[:, 0],
+        manga_vectors_2d[:, 1],
+        c=df.tag.fillna("Other").apply(color_map.get),
+    )
+
+    # add legend
+    for tag, color in color_map.items():
+        ax.scatter([], [], c=color, label=tag)
+
+    ax.set_title(title)
+    ax.legend(loc="upper right", title="Secondary Tag")
+
+    plt.tight_layout()
