@@ -88,6 +88,7 @@ manga-recsys models manga tags-lsi data/processed/2022-12-17-metadata-listing/ma
 
 ```bash
 gcloud --project manga-recsys storage buckets create gs://manga-recsys
+manga-recsys sync tar-gz
 manga-recsys sync upload
 # for small static files that are directly downloaded by clients, to help save on bandwidth
 manga-recsys sync upload-gz
