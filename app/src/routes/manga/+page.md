@@ -8,6 +8,8 @@
 Go to the [manga explore](/manga/explore) page to try out the recommendations.
 Note that this page may take some time to load.
 
+See the [manga embedding plots](/manga/embedding-plots) page for a visualization of the recommendations through the embedding space.
+
 ## notes
 
 ### table of contents
@@ -31,7 +33,8 @@ The second model is a [latent semantic indexing (LSI)](https://en.wikipedia.org/
 Again, we recommend the most similar manga based on the cosine similarity of the left singular vector found by the singular value decomposition (SVD).
 The final model performs soft-clustering on a manga-tag bipartite network.
 We count all the possible paths between two manga through shared tags to create a manga-manga network.
-We then factorize the weighted adjacency matrix and find the nearest neighbors to each manga.
+We then recommend the most similar manga based on the number of shared tags.
+To ensure consistency among models, we embed the network onto a manifold using a spectral embedding ([Laplacian Eigenmap](https://www2.imm.dtu.dk/projects/manifold/Papers/Laplacian.pdf)).
 
 One immediate extension we can make to these models is to use frequent itemsets as words instead of just tags.
 In other words, we consider all bi-grams, tri-grams, etc. of tags as words.
@@ -40,10 +43,9 @@ One such method is to take the [BERT](https://huggingface.co/docs/transformers/m
 Finally, we can consider adding in popularity or rating statistics to the models.
 These statistics would likely act as a bias term to re-rank recommendations, and would likely require hyper-parameter tuning to be effective.
 
-### word2vec and embeddings
+### embeddings
 
-The word2vec model is a neural network that learns to represent words in a vector space.
-We use `gensim` to train a continuous bag of words (CBOW) model on the tag data.
+This plot shows the distribution of tags that appear in each manga.
 
 <img alt="tag count histogram" src="/manga-info/20221221-tag-count-histogram.png">
 
@@ -51,7 +53,10 @@ This plot shows how often a tag appears in the dataset.
 
 <img alt="tag count per manga histogram" src="/manga-info/20221221-tag-count-per-manga-histogram.png">
 
-This plot shows the distribution of tags that appear in each manga.
+#### word2vec
+
+The word2vec model is a neural network that learns to represent words in a vector space.
+We use `gensim` to train a continuous bag of words (CBOW) model on the tag data.
 
 <img alt="tag word2vec {methods[selected_method]}" src="/manga-info/20221221-tag-word2vec-{methods[selected_method]}.png">
 
@@ -71,6 +76,32 @@ This plot shows the distribution of tags that appear in each manga.
 
 After generating a 16-dimensional word2vec embedding, treating tags on each manga as a sentence, we visualize the tag embeddings using [UMAP](https://umap-learn.readthedocs.io/en/latest/).
 The dimensions are meaningless, but the relative distances between tags are meaningful.
+
+#### latent semantic indexing (LSI)
+
+The latent semantic indexing (LSI) model is a method for dimensionality reduction.
+It is based on the singular value decomposition (SVD) of a scaled document-term matrix.
+
+#### spectral embedding
+
+The spectral embedding model is a method for dimensionality reduction based on network connectivity.
+We use this to reduce the dimensionality of the network, and to ensure that modeling backends are represented using the same API.
+
+### network deconvolution
+
+[Network deconvolution](https://www.nature.com/articles/nbt.2635) is a general method for removing indirect effects from a network.
+We suspect this method will be useful for removing indirect effects from a manga-tag bipartite network.
+We use the following closed form equation to represent the transitive closure over the network.
+
+$$
+G_{\text{obs}} = G_{\text{dir}} (I - G_{\text{dir}})^{-1}
+$$
+
+The network deconvolution is represented as follows:
+
+$$
+G_{\text{dir}} = G_{\text{obs}} (I + G_{\text{obs}})^{-1}
+$$
 
 ### approximate nearest neighbors
 
@@ -117,7 +148,8 @@ Then when we query the database for similar manga to a query manga, we also aver
 
 ### changelog
 
-- 2021-12-20: Initial version of the manga recommendations page.
+- 2022-12-20: Initial version of the manga recommendations page.
+- 2022-12-27: Added reference to network analysis, section on embedding plots
 
 <style>
 img {

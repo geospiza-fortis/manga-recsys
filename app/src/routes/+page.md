@@ -8,5 +8,6 @@ Feel free to reach out with questions or comments on the MangaDex or Tachiyomi d
 - [groups](./groups)
 - [manga](./manga)
   - [explore](./manga/explore)
+  - [embedding plots](./manga/embedding-plots)
 - [data](./data)
 - [openapi](./openapi)
