@@ -2,12 +2,13 @@
   import Table from "$lib/Table.svelte";
   import { tippyMangaInfo, destroyTippy } from "$lib/tabulator.js";
 
-  async function get_manga_recommendation(uid) {
-    let resp = await fetch(`/api/v1/models/manga-tags-word2vec/recommendations/${uid}.json`);
+  async function get_manga_recommendation(uid, model) {
+    let resp = await fetch(`/api/v1/models/${model}/recommendations/${uid}.json`);
     return await resp.json();
   }
 
   export let selected_id;
+  export let model = "manga-tags-word2vec";
   let table;
 
   let data;
@@ -37,7 +38,7 @@
   $: table &&
     table.on("rowMouseOver", (_, row) => tippyMangaInfo(row, { placement: "bottom" }, "rec_id"));
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
-  $: selected_id && get_manga_recommendation(selected_id).then((r) => (data = r));
+  $: selected_id && get_manga_recommendation(selected_id, model).then((r) => (data = r));
 </script>
 
 <Table {data} {options} bind:table />
