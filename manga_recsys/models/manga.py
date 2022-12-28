@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,11 +23,16 @@ def get_tag_counts(manga_info: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
     )
 
 
-def get_manga_tags(manga_info: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
+def get_manga_tags(
+    manga_info: pyspark.sql.DataFrame, group: Optional[str] = None
+) -> pyspark.sql.DataFrame:
     """Get a list of tags for each manga."""
+    assert group in ["theme", "format", "genre", "content", None], "Invalid group"
+    exploded = manga_info.select("id", F.explode("tags").alias("tag"))
+    if group is not None:
+        exploded = exploded.filter(F.col("tag.group") == group)
     return (
-        manga_info.select("id", F.explode("tags").alias("tag"))
-        .groupBy("id")
+        exploded.groupBy("id")
         .agg(F.collect_list("tag.name").alias("tags"))
         .orderBy("id")
     )
@@ -187,6 +193,7 @@ def recs_with_secondary_tag(
         .join(
             manga_tags.select("id", "tags").withColumnRenamed("id", "rec_id"),
             on="rec_id",
+            how="inner",
         )
         .withColumn("tag", F.explode("tags"))
         .groupBy("id", "tag")
@@ -232,23 +239,34 @@ def recs_with_secondary_tag(
     return df.toPandas()
 
 
-def plot_recommendation_2d(df, vector_col, reducer, title, sample=None):
+def plot_recommendation_dims(df, vector_col, reducer, title, n_dims=2, sample=None):
     if sample is not None:
         df = df.sample(sample)
-    manga_vectors_2d = reducer.fit_transform(np.stack(df[vector_col]))
+    vec = reducer.fit_transform(np.stack(df[vector_col]))
 
     # add color map for the tag using convention
     tag_freq = df.groupby("tag").count().sort_values("id", ascending=False)
     color_map = {tag: f"C{i}" for i, tag in enumerate(tag_freq.index)}
-    # print(tag_freq)
-    # print(color_map)
 
+    # scatter in either 2 or 3 dimensions
     _, ax = plt.subplots(figsize=(8, 8))
-    ax.scatter(
-        manga_vectors_2d[:, 0],
-        manga_vectors_2d[:, 1],
-        c=df.tag.fillna("Other").apply(color_map.get),
-    )
+    if n_dims == 2:
+        ax.scatter(
+            *[vec[:, i] for i in range(n_dims)],
+            c=df.tag.fillna("Other").apply(color_map.get),
+            # tens of thousands of small dots, so use alpha to make it look better
+            alpha=0.5,
+        )
+    elif n_dims == 3:
+        ax = plt.axes(projection="3d")
+        ax.scatter3D(
+            *[vec[:, i] for i in range(n_dims)],
+            c=df.tag.fillna("Other").apply(color_map.get),
+            # tens of thousands of small dots, so use alpha to make it look better
+            alpha=0.5,
+        )
+    else:
+        raise ValueError("n_dims must be 2 or 3")
 
     # add legend
     for tag, color in color_map.items():
