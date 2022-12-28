@@ -85,6 +85,8 @@ manga-recsys models manga tags-lsi data/processed/2022-12-17-metadata-listing/ma
 
 # plots for manga recommendations
 manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-plots
+
+manga-recsys models manga generate-plot-manifest data/processed/2022-12-27-recommendation-manga-plots
 ```
 
 ### storage

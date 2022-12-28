@@ -1,6 +1,5 @@
 """Generate recommendations from from manga to manga."""
-# ignore warnings with the following text:
-# FutureWarning: iteritems is deprecated and will be removed in a future version
+import json
 import warnings
 from multiprocessing import Pool
 from pathlib import Path
@@ -26,6 +25,8 @@ from manga_recsys.models.manga import (
 )
 from manga_recsys.spark import get_spark
 
+# ignore warnings with the following text:
+# FutureWarning: iteritems is deprecated and will be removed in a future version
 warnings.filterwarnings("ignore", message=".*iteritems.*")
 
 
@@ -169,3 +170,27 @@ def plot_models(input_manga_info, output, num_recs, n_dims, cores, memory):
                             for reducer in reducers
                         ],
                     )
+
+
+@manga.command()
+@click.argument("root_path", type=click.Path(exists=True))
+def generate_plot_manifest(root_path):
+    """Generate a json manifest that contains a list of the paths to all the plots.
+
+    This includes the path convention of "<model>/<group>/<tag>/<reducer>.png"
+    """
+    root_path = Path(root_path)
+    manifest = []
+    for path in root_path.glob("**/*.png"):
+        parts = path.parts
+        manifest.append(
+            {
+                "path": path.relative_to(root_path).as_posix(),
+                "model": parts[-4],
+                "group": parts[-3],
+                "tag": parts[-2],
+                "reducer": parts[-1].replace(".png", ""),
+            }
+        )
+    with open(root_path.joinpath("manifest.json"), "w") as f:
+        json.dump(manifest, f)
