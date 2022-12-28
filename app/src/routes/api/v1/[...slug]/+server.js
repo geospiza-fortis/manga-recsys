@@ -23,6 +23,11 @@ const mapping = {
   "data/manga.ndjson": "data/raw/2022-12-10-mangadex-manga.ndjson",
   "data/chapter.ndjson": "data/raw/2022-12-16-mangadex-chapter.ndjson",
   "data/group.ndjson": "data/raw/2022-12-17-mangadex-group.ndjson",
+
+  // plots that are "static", probably should rename the data path in the future
+  "data/manga-tags-plots": "data/processed/2022-12-27-recommendation-manga-plots",
+
+  // tag rules are a type of model
   "models/tag-rules": "data/processed/2022-12-14-tag-rules",
 
   // served compressed by default
