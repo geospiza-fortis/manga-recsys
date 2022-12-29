@@ -1,6 +1,7 @@
 """Generate recommendations from from manga to manga."""
 import json
 import warnings
+from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -51,9 +52,10 @@ def _generate_rec(
     manga_info, method: str, cores=8, num_recs=20, metric="cosine", **kwargs
 ):
     func = {
+        # we assume for w2v and lsi that the cosine distance is used implicitly
         "w2v": generate_manga_tags_word2vec,
         "lsi": generate_manga_tags_tfidf_lsi,
-        "network": generate_manga_tags_network,
+        "network": partial(generate_manga_tags_network, metric=metric),
     }
 
     manga_tags = func[method](manga_info, vector_col="emb", **kwargs)

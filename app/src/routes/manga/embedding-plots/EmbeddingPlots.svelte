@@ -57,7 +57,13 @@
   <div>
     {#each groups as group}
       <label>
-        <input type="radio" name="group" value={group} bind:group={selectedGroup} />
+        <input
+          type="radio"
+          name="group"
+          value={group}
+          bind:group={selectedGroup}
+          on:change={() => (selectedTag = selectedGroup == "genre" ? "Isekai" : "Reincarnation")}
+        />
         {group}
       </label>
     {/each}

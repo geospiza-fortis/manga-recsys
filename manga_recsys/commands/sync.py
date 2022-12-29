@@ -186,8 +186,9 @@ def untar_gz(overwrite, output, cores):
     "--overwrite/--no-overwrite", default=False, help="Overwrite existing files"
 )
 @click.option("--delete/--no-delete", default=False, help="Delete remote files")
+@click.option("--dry-run/--no-dry-run", default=False, help="Dry run")
 @click.option("--cores", default=8, help="Number of cores to use during compression")
-def upload_gz(overwrite, delete, cores):
+def upload_gz(overwrite, delete, dry_run, cores):
     """Compress and upload files that need to be served compressed."""
 
     input_path = Path("data/")
@@ -201,6 +202,9 @@ def upload_gz(overwrite, delete, cores):
             "-h",
             "content-encoding:gzip",
             "rsync",
+            "-c",
+            "-i",
+            *(["-n"] if dry_run else []),
             *(["-d"] if delete else []),
             "-r",
             "data/gz/",
@@ -212,7 +216,8 @@ def upload_gz(overwrite, delete, cores):
 
 @sync.command()
 @click.option("--delete/--no-delete", default=False, help="Delete remote files")
-def upload(delete):
+@click.option("--dry-run/--no-dry-run", default=False, help="Dry run")
+def upload(delete, dry_run):
     """Upload local data to the remote storage bucket."""
     root = Path("data/")
     assert root.exists(), "data directory not found"
@@ -227,9 +232,11 @@ def upload(delete):
             continue
         if path.name == "gz":
             continue
+        path = path.as_posix()
         cmd = " ".join(
             [
-                "gsutil -m rsync",
+                "gsutil -m rsync -c",
+                *(["-n"] if dry_run else []),
                 *(["-d"] if delete else []),
                 f"-r {path}/ gs://manga-recsys/{path}/",
             ]
@@ -240,11 +247,18 @@ def upload(delete):
 
 @sync.command()
 @click.option("--path", default="data/", help="Path to local data directory")
-def download(path):
+@click.option("--dry-run/--no-dry-run", default=False, help="Dry run")
+def download(path, dry_run):
     """Download remote data to the local storage bucket."""
     assert path.endswith("/"), "path must end with a slash"
     assert path.startswith("data/"), "path must start with data/"
     Path(path).mkdir(parents=True, exist_ok=True)
-    cmd = f'gsutil -m rsync -x "^gz" -r gs://manga-recsys/{path} {path}'
+    cmd = " ".join(
+        [
+            f'gsutil -m rsync -c -x "^gz"',
+            *(["-n"] if dry_run else []),
+            f"-r gs://manga-recsys/{path} {path}",
+        ]
+    )
     print(cmd)
     subprocess.run(cmd, shell=True, check=True)
