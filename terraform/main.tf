@@ -155,7 +155,7 @@ resource "google_cloud_run_v2_job" "sync-tar-to-gz" {
         resources {
           limits = {
             cpu    = "4000m"
-            memory = "4Gi"
+            memory = "16Gi"
           }
         }
       }
