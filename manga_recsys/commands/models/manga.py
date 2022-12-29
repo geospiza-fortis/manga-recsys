@@ -79,7 +79,7 @@ def tags_word2vec(input_manga_info, output, num_recs, cores, memory):
     recs.printSchema()
     recs.show()
 
-    write_df(spark.createDataFrame(rec_df), output / "embedding")
+    write_df(spark.createDataFrame(rec_df), output / "embedding", write_json=False)
     _write_recs(recs, output, cores)
 
 
@@ -100,7 +100,7 @@ def tags_lsi(input_manga_info, output, num_recs, cores, memory):
     recs.printSchema()
     recs.show()
 
-    write_df(spark.createDataFrame(rec_df), output / "embedding", json=False)
+    write_df(spark.createDataFrame(rec_df), output / "embedding", write_json=False)
     _write_recs(recs, output, cores)
 
 
@@ -124,7 +124,7 @@ def tags_network(input_manga_info, output, deconvolve, num_recs, cores, memory):
     recs.printSchema()
     recs.show()
 
-    write_df(spark.createDataFrame(rec_df), output / "embedding", json=False)
+    write_df(spark.createDataFrame(rec_df), output / "embedding", write_json=False)
     _write_recs(recs, output, cores)
 
 

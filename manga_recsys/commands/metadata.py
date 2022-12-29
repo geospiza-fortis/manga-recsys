@@ -50,8 +50,8 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
 
     # take the language for each manga that has the lowest rank
     manga_name_description = (
-        manga_name_lang.join(manga_description_lang, ["manga_id", "lang"])
-        .join(lang_ordered, "lang")
+        manga_name_lang.join(manga_description_lang, ["manga_id", "lang"], how="left")
+        .join(lang_ordered, "lang", how="left")
         .withColumn(
             "manga_lang_rank",
             F.row_number().over(Window.partitionBy("manga_id").orderBy("rank")),
@@ -126,7 +126,6 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
             group_manga.withColumn("id", F.col("manga_id"))
             .groupBy("id")
             .agg(
-                F.first("manga_name").alias("name"),
                 F.max("chapter_count").alias("chapter_count"),
                 F.max("page_count").alias("page_count"),
             ),
@@ -136,6 +135,7 @@ def metadata(input_group, input_manga, input_chapter, output, cores, memory):
         .join(
             manga_name_description.select(
                 F.col("manga_id").alias("id"),
+                F.col("manga_name").alias("name"),
                 F.col("manga_description").alias("description"),
             ),
             "id",
