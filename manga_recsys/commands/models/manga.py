@@ -15,6 +15,7 @@ from sklearn.manifold import TSNE
 from manga_recsys.commands.utils import write_df, write_df_per_uid
 from manga_recsys.models.manga import (
     explode_recommendations,
+    generate_manga_tags_network,
     generate_manga_tags_tfidf_lsi,
     generate_manga_tags_word2vec,
     generate_recommendations,
@@ -46,24 +47,18 @@ def _write_recs(recs, output, cores=8):
     )
 
 
-def _generate_rec(manga_info, method: str, cores=8, num_recs=20):
-    if method == "w2v":
-        manga_tags = generate_manga_tags_word2vec(
-            manga_info, vector_col="w2v", workers=cores
-        )
-        rec_df = generate_recommendations(
-            manga_tags, "id", "w2v", k=num_recs, metric="cosine", n_jobs=cores
-        )
-        return rec_df
-    elif method == "lsi":
-        # https://radimrehurek.com/gensim/models/lsimodel.html
-        manga_tags_lsi = generate_manga_tags_tfidf_lsi(manga_info)
-        rec_df = generate_recommendations(
-            manga_tags_lsi, "id", "lsi", k=num_recs, metric="cosine", n_jobs=cores
-        )
-        return rec_df
-    else:
-        raise ValueError(f"Invalid method {method}")
+def _generate_rec(manga_info, method: str, cores=8, num_recs=20, **kwargs):
+    func = {
+        "w2v": generate_manga_tags_word2vec,
+        "lsi": generate_manga_tags_tfidf_lsi,
+        "network": generate_manga_tags_network,
+    }
+
+    manga_tags = func[method](manga_info, vector_col="emb", workers=cores, **kwargs)
+    rec_df = generate_recommendations(
+        manga_tags, "id", "emb", k=num_recs, metric="cosine", n_jobs=cores
+    )
+    return rec_df
 
 
 @manga.command()
@@ -77,13 +72,14 @@ def tags_word2vec(input_manga_info, output, num_recs, cores, memory):
     spark = get_spark(cores=cores, memory=memory)
     manga_info = spark.read.parquet(input_manga_info).cache()
 
-    rec_df = _generate_rec(manga_info, "w2v")
+    rec_df = _generate_rec(manga_info, "w2v", num_recs=num_recs)
 
     recs = explode_recommendations(spark, rec_df)
     recs = map_names_to_recommendations(manga_info, recs).cache()
     recs.printSchema()
     recs.show()
 
+    write_df(spark.createDataFrame(rec_df), output / "embedding")
     _write_recs(recs, output, cores)
 
 
@@ -97,13 +93,38 @@ def tags_lsi(input_manga_info, output, num_recs, cores, memory):
     spark = get_spark(cores=cores, memory=memory)
     manga_info = spark.read.parquet(input_manga_info).cache()
 
-    rec_df = _generate_rec(manga_info, "lsi")
+    rec_df = _generate_rec(manga_info, "lsi", num_recs=num_recs)
 
     recs = explode_recommendations(spark, rec_df)
     recs = map_names_to_recommendations(manga_info, recs).cache()
     recs.printSchema()
     recs.show()
 
+    write_df(spark.createDataFrame(rec_df), output / "embedding", json=False)
+    _write_recs(recs, output, cores)
+
+
+@manga.command()
+@click.argument("input-manga-info", type=click.Path(exists=True))
+@click.argument("output", type=click.Path())
+@click.option("--deconvolve/--no-deconvolve", default=False)
+@click.option("--num-recs", type=int, default=20)
+@click.option("--cores", type=int, default=8)
+@click.option("--memory", default="6g")
+def tags_network(input_manga_info, output, deconvolve, num_recs, cores, memory):
+    spark = get_spark(cores=cores, memory=memory)
+    manga_info = spark.read.parquet(input_manga_info).cache()
+
+    rec_df = _generate_rec(
+        manga_info, "network", num_recs=num_recs, deconvolve=deconvolve
+    )
+
+    recs = explode_recommendations(spark, rec_df)
+    recs = map_names_to_recommendations(manga_info, recs).cache()
+    recs.printSchema()
+    recs.show()
+
+    write_df(spark.createDataFrame(rec_df), output / "embedding", json=False)
     _write_recs(recs, output, cores)
 
 
@@ -111,6 +132,7 @@ def _write_plot_method(output_path, reducer, recs, method, primary_tag, n_dims=2
     method_name = {
         "w2v": "word2vec",
         "lsi": "LSI",
+        "network": "network",
     }[method]
     class_name = reducer.__class__.__name__
     plot_recommendation_dims(

@@ -45,14 +45,15 @@ def consolidate_json(path):
     _consolidate(path, "json")
 
 
-def write_df(df, path):
+def write_df(df, path, json=True):
     path = Path(path)
     print(f"Writing to {path}")
     parted = df.repartition(1).cache()
     parted.write.parquet(path.as_posix(), mode="overwrite")
     consolidate_parquet(path)
-    collected = [row.asDict(recursive=True) for row in parted.collect()]
-    path.with_suffix(".json").write_text(json.dumps(collected))
+    if json:
+        collected = [row.asDict(recursive=True) for row in parted.collect()]
+        path.with_suffix(".json").write_text(json.dumps(collected))
     parted.unpersist()
 
 

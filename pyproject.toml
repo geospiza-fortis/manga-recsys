@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "manga-recsys"
-version = "0.8.0"
+version = "0.9.0"
 description = ""
 authors = ["geospiza <geospiza@protonmail.com>"]
 readme = "README.md"
@@ -29,6 +29,7 @@ black = { version = "^22.12.0", allow-prereleases = true }
 nb-black = "^1.0.7"
 pytest = "^7.2.0"
 schemathesis = "^3.17.5"
+ipywidgets = "^8.0.4"
 
 [tool.poetry.scripts]
 manga-recsys = "manga_recsys.commands:cli"

@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyspark.sql
+import umap
 from gensim import corpora
 from gensim.matutils import corpus2dense
 from gensim.models import LsiModel, TfidfModel, Word2Vec
 from pynndescent import NNDescent
 from pyspark.sql import Window
 from pyspark.sql import functions as F
+from scipy.linalg import eig
+from scipy.sparse.csgraph import laplacian
 
 
 def get_tag_counts(manga_info: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
@@ -93,6 +96,57 @@ def generate_manga_tags_tfidf_lsi(
         return manga_tags, (tfidf, lsi)
     else:
         return manga_tags
+
+
+def network_deconvolution(G):
+    """Deconvolve a network matrix using the eigen decomposition.
+
+    TODO: is is possible to do this with SVD?
+
+    https://www.nature.com/articles/nbt.2635
+    """
+    # eigen decomposition
+    lam, lhs, rhs = eig(G)
+    # rescale the eigenvalues
+    lam_dir = lam / (1 + lam)
+    # reconstruct the deconvolved matrix
+    G_deconv = lhs @ np.diag(lam_dir) @ rhs
+    return G_deconv.real
+
+
+def generate_manga_tags_network(
+    manga_info: pyspark.sql.DataFrame,
+    vector_col: str = "network",
+    vector_size: int = 256,
+    deconvolve: bool = False,
+    metric: str = "cosine",
+    **kwargs,
+) -> pd.DataFrame:
+    """Add an averaged wordvector as a feature to the manga_tags dataframe."""
+    manga_tags = get_manga_tags(manga_info).toPandas()
+
+    # generate the word2vec model using cbow
+    dictionary = corpora.Dictionary(manga_tags.tags)
+    corpus = [dictionary.doc2bow(tags) for tags in manga_tags.tags]
+    tag_manga_mat = corpus2dense(corpus, num_terms=len(dictionary)).astype("float32")
+    manga_manga_mat = tag_manga_mat.T @ tag_manga_mat
+    np.fill_diagonal(manga_manga_mat, 0)
+
+    if deconvolve:
+        # this returns a real matrix, but entries might be negative due to
+        # rescaling. does this pose a problem when computing the laplacian?
+        manga_manga_mat = network_deconvolution(manga_manga_mat)
+
+    laplacian(manga_manga_mat, normed=True, copy=False)
+
+    # generate an embedding using umap, which is reasonably fast
+    reducer = umap.UMAP(n_components=vector_size, metric=metric, low_memory=True)
+    emb = reducer.fit_transform(np.asarray(manga_manga_mat))
+
+    # add features to the manga_tags dataframe to start making recommendations
+    manga_tags[vector_col] = emb
+
+    return manga_tags
 
 
 def get_closest(index, mapping, k, query_vector):
