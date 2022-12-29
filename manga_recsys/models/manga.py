@@ -1,3 +1,4 @@
+import time
 from functools import partial
 from typing import Optional
 
@@ -125,26 +126,42 @@ def generate_manga_tags_network(
     """Add an averaged wordvector as a feature to the manga_tags dataframe."""
     manga_tags = get_manga_tags(manga_info).toPandas()
 
-    # generate the word2vec model using cbow
+    # generate the network model using cbow
     dictionary = corpora.Dictionary(manga_tags.tags)
     corpus = [dictionary.doc2bow(tags) for tags in manga_tags.tags]
+
+    # time sections
+    start = time.time()
+    print("generating manga-manga matrix")
     tag_manga_mat = corpus2dense(corpus, num_terms=len(dictionary)).astype("float32")
     manga_manga_mat = tag_manga_mat.T @ tag_manga_mat
     np.fill_diagonal(manga_manga_mat, 0)
+    print(f"generated manga-manga matrix: {time.time() - start:.2f} seconds")
 
     if deconvolve:
         # this returns a real matrix, but entries might be negative due to
         # rescaling. does this pose a problem when computing the laplacian?
+        print("deconvolving matrix")
+        start = time.time()
         manga_manga_mat = network_deconvolution(manga_manga_mat)
+        print(f"deconvolved matrix: {time.time() - start:.2f} seconds")
 
+    print("computing laplacian")
+    start = time.time()
     laplacian(manga_manga_mat, normed=True, copy=False)
+    print(f"computing laplacian: {time.time() - start:.2f} seconds")
 
     # generate an embedding using umap, which is reasonably fast
-    reducer = umap.UMAP(n_components=vector_size, metric=metric, low_memory=True)
+    print("generating embedding")
+    start = time.time()
+    reducer = umap.UMAP(
+        n_components=vector_size, metric=metric, low_memory=True, verbose=True
+    )
     emb = reducer.fit_transform(np.asarray(manga_manga_mat))
+    print(f"generated embedding: {time.time() - start:.2f} seconds")
 
     # add features to the manga_tags dataframe to start making recommendations
-    manga_tags[vector_col] = emb
+    manga_tags[vector_col] = emb.tolist()
 
     return manga_tags
 

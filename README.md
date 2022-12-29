@@ -83,6 +83,10 @@ manga-recsys models manga tags-word2vec data/processed/2022-12-17-metadata-listi
 # second manga recommendations based on tag lsi
 manga-recsys models manga tags-lsi data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-tags-lsi
 
+# recommendation based on tag network
+manga-recsys models manga tags-network data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-28-recommendation-manga-tags-network
+
+
 # plots for manga recommendations
 manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-plots
 

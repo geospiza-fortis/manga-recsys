@@ -54,7 +54,7 @@ def _generate_rec(manga_info, method: str, cores=8, num_recs=20, **kwargs):
         "network": generate_manga_tags_network,
     }
 
-    manga_tags = func[method](manga_info, vector_col="emb", workers=cores, **kwargs)
+    manga_tags = func[method](manga_info, vector_col="emb", **kwargs)
     rec_df = generate_recommendations(
         manga_tags, "id", "emb", k=num_recs, metric="cosine", n_jobs=cores
     )
@@ -72,14 +72,16 @@ def tags_word2vec(input_manga_info, output, num_recs, cores, memory):
     spark = get_spark(cores=cores, memory=memory)
     manga_info = spark.read.parquet(input_manga_info).cache()
 
-    rec_df = _generate_rec(manga_info, "w2v", num_recs=num_recs)
+    rec_df = _generate_rec(manga_info, "w2v", num_recs=num_recs, workers=cores)
 
     recs = explode_recommendations(spark, rec_df)
     recs = map_names_to_recommendations(manga_info, recs).cache()
     recs.printSchema()
     recs.show()
 
-    write_df(spark.createDataFrame(rec_df), output / "embedding", write_json=False)
+    write_df(
+        spark.createDataFrame(rec_df), Path(output) / "embedding", write_json=False
+    )
     _write_recs(recs, output, cores)
 
 
@@ -100,7 +102,9 @@ def tags_lsi(input_manga_info, output, num_recs, cores, memory):
     recs.printSchema()
     recs.show()
 
-    write_df(spark.createDataFrame(rec_df), output / "embedding", write_json=False)
+    write_df(
+        spark.createDataFrame(rec_df), Path(output) / "embedding", write_json=False
+    )
     _write_recs(recs, output, cores)
 
 
@@ -124,24 +128,19 @@ def tags_network(input_manga_info, output, deconvolve, num_recs, cores, memory):
     recs.printSchema()
     recs.show()
 
-    write_df(spark.createDataFrame(rec_df), output / "embedding", write_json=False)
+    write_df(
+        spark.createDataFrame(rec_df), Path(output) / "embedding", write_json=False
+    )
     _write_recs(recs, output, cores)
 
 
 def _write_plot_method(output_path, reducer, recs, method, primary_tag, n_dims=2):
-    method_name = {
-        "w2v": "word2vec",
-        "lsi": "LSI",
-        "network": "network",
-    }[method]
     class_name = reducer.__class__.__name__
     plot_recommendation_dims(
         recs,
         method,
         reducer,
-        title=(
-            f"{primary_tag} {method_name} embedding ({class_name}) (n={recs.shape[0]})"
-        ),
+        title=(f"{primary_tag} {method} embedding ({class_name}) (n={recs.shape[0]})"),
         n_dims=n_dims,
     )
     plt.savefig(output_path / f"{class_name}.png")
@@ -150,12 +149,21 @@ def _write_plot_method(output_path, reducer, recs, method, primary_tag, n_dims=2
 
 @manga.command()
 @click.argument("input-manga-info", type=click.Path(exists=True))
+@click.argument("input-model-embedding", type=click.Path(exists=True))
+@click.argument("method", type=click.Choice(["word2vec", "lsi", "network"]))
 @click.argument("output", type=click.Path())
-@click.option("--num-recs", type=int, default=20)
 @click.option("--n-dims", type=int, default=2)
 @click.option("--cores", type=int, default=6)
 @click.option("--memory", default="6g")
-def plot_models(input_manga_info, output, num_recs, n_dims, cores, memory):
+def plot_models(
+    input_manga_info,
+    input_model_embedding,
+    method,
+    output,
+    n_dims,
+    cores,
+    memory,
+):
     spark = get_spark(cores=cores, memory=memory)
     manga_info = spark.read.parquet(input_manga_info).cache()
 
@@ -166,32 +174,30 @@ def plot_models(input_manga_info, output, num_recs, n_dims, cores, memory):
         .distinct()
     ).toPandas()
 
-    # first generate recommendations
-    for method in ["w2v", "lsi"]:
-        rec_df = _generate_rec(manga_info, method, cores=cores, num_recs=num_recs)
-        for group in ["theme", "genre"]:
-            tags = theme_genres[theme_genres["group"] == group].name.unique().tolist()
-            manga_tags = get_manga_tags(manga_info, group).cache()
-            for primary_tag in tqdm.tqdm(tags):
-                output_path = Path(output) / method / group / primary_tag
-                output_path.mkdir(parents=True, exist_ok=True)
+    rec_df = spark.read.parquet(input_model_embedding).toPandas()
+    for group in ["theme", "genre"]:
+        tags = theme_genres[theme_genres["group"] == group].name.unique().tolist()
+        manga_tags = get_manga_tags(manga_info, group).cache()
+        for primary_tag in tqdm.tqdm(tags):
+            output_path = Path(output) / method / group / primary_tag
+            output_path.mkdir(parents=True, exist_ok=True)
 
-                recs = recs_with_secondary_tag(
-                    spark, rec_df, manga_tags, primary_tag, verbose=False
+            recs = recs_with_secondary_tag(
+                spark, rec_df, manga_tags, primary_tag, verbose=False
+            )
+            reducers = [
+                umap.UMAP(n_components=n_dims, metric="cosine"),
+                TSNE(n_components=n_dims),
+                PCA(n_components=n_dims),
+            ]
+            with Pool(3) as p:
+                p.starmap(
+                    _write_plot_method,
+                    [
+                        (output_path, reducer, recs, method, primary_tag, n_dims)
+                        for reducer in reducers
+                    ],
                 )
-                reducers = [
-                    umap.UMAP(n_components=n_dims, metric="cosine"),
-                    TSNE(n_components=n_dims),
-                    PCA(n_components=n_dims),
-                ]
-                with Pool(3) as p:
-                    p.starmap(
-                        _write_plot_method,
-                        [
-                            (output_path, reducer, recs, method, primary_tag, n_dims)
-                            for reducer in reducers
-                        ],
-                    )
 
 
 @manga.command()
