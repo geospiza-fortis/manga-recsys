@@ -47,7 +47,9 @@ def _write_recs(recs, output, cores=8):
     )
 
 
-def _generate_rec(manga_info, method: str, cores=8, num_recs=20, **kwargs):
+def _generate_rec(
+    manga_info, method: str, cores=8, num_recs=20, metric="cosine", **kwargs
+):
     func = {
         "w2v": generate_manga_tags_word2vec,
         "lsi": generate_manga_tags_tfidf_lsi,
@@ -56,7 +58,7 @@ def _generate_rec(manga_info, method: str, cores=8, num_recs=20, **kwargs):
 
     manga_tags = func[method](manga_info, vector_col="emb", **kwargs)
     rec_df = generate_recommendations(
-        manga_tags, "id", "emb", k=num_recs, metric="cosine", n_jobs=cores
+        manga_tags, "id", "emb", k=num_recs, metric=metric, n_jobs=cores
     )
     return rec_df
 
@@ -111,16 +113,23 @@ def tags_lsi(input_manga_info, output, num_recs, cores, memory):
 @manga.command()
 @click.argument("input-manga-info", type=click.Path(exists=True))
 @click.argument("output", type=click.Path())
+@click.option(
+    "--metric", type=click.Choice(["cosine", "wasserstein"]), default="wasserstein"
+)
 @click.option("--deconvolve/--no-deconvolve", default=False)
 @click.option("--num-recs", type=int, default=20)
 @click.option("--cores", type=int, default=8)
 @click.option("--memory", default="6g")
-def tags_network(input_manga_info, output, deconvolve, num_recs, cores, memory):
+def tags_network(input_manga_info, output, metric, deconvolve, num_recs, cores, memory):
     spark = get_spark(cores=cores, memory=memory)
     manga_info = spark.read.parquet(input_manga_info).cache()
 
     rec_df = _generate_rec(
-        manga_info, "network", num_recs=num_recs, deconvolve=deconvolve
+        manga_info,
+        "network",
+        num_recs=num_recs,
+        deconvolve=deconvolve,
+        metric=metric,
     )
 
     recs = explode_recommendations(spark, rec_df)
@@ -138,7 +147,7 @@ def _write_plot_method(output_path, reducer, recs, method, primary_tag, n_dims=2
     class_name = reducer.__class__.__name__
     plot_recommendation_dims(
         recs,
-        method,
+        "emb",
         reducer,
         title=(f"{primary_tag} {method} embedding ({class_name}) (n={recs.shape[0]})"),
         n_dims=n_dims,
@@ -150,7 +159,10 @@ def _write_plot_method(output_path, reducer, recs, method, primary_tag, n_dims=2
 @manga.command()
 @click.argument("input-manga-info", type=click.Path(exists=True))
 @click.argument("input-model-embedding", type=click.Path(exists=True))
-@click.argument("method", type=click.Choice(["word2vec", "lsi", "network"]))
+@click.argument(
+    "method",
+    type=click.Choice(["word2vec", "lsi", "network-cosine", "network-wasserstein"]),
+)
 @click.argument("output", type=click.Path())
 @click.option("--n-dims", type=int, default=2)
 @click.option("--cores", type=int, default=6)
@@ -186,7 +198,7 @@ def plot_models(
                 spark, rec_df, manga_tags, primary_tag, verbose=False
             )
             reducers = [
-                umap.UMAP(n_components=n_dims, metric="cosine"),
+                umap.UMAP(n_components=n_dims),
                 TSNE(n_components=n_dims),
                 PCA(n_components=n_dims),
             ]

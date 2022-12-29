@@ -3,7 +3,7 @@
     import MangaRecommendationTable from "./MangaRecommendationTable.svelte";
     export let data;
     let selected_id = null;
-    const models = ["manga-tags-word2vec", "manga-tags-lsi"]
+    const models = ["manga-tags-word2vec", "manga-tags-lsi", "manga-tags-network-cosine"]
 </script>
 
 # manga explore

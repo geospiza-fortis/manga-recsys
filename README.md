@@ -88,7 +88,12 @@ manga-recsys models manga tags-network data/processed/2022-12-17-metadata-listin
 
 
 # plots for manga recommendations
-manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-plots
+manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-20-recommendation-manga-tags-word2vec/embedding.parquet word2vec data/processed/2022-12-27-recommendation-manga-plots
+
+manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-tags-lsi/embedding.parquet lsi data/processed/2022-12-27-recommendation-manga-plots
+
+manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-28-recommendation-manga-tags-network-cosine/embedding.parquet network-cosine data/processed/2022-12-27-recommendation-manga-plots
+
 
 manga-recsys models manga generate-plot-manifest data/processed/2022-12-27-recommendation-manga-plots
 ```
