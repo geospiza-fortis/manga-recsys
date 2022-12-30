@@ -138,7 +138,7 @@ resource "google_cloud_run_v2_job" "sync-tar-to-gz" {
     task_count  = 1
     template {
       max_retries = 0
-      timeout     = "1800s"
+      timeout     = "3600s"
       containers {
         image = "gcr.io/${local.project_id}/${local.repo_name}-sys:latest"
         command = [
@@ -154,7 +154,7 @@ resource "google_cloud_run_v2_job" "sync-tar-to-gz" {
         ]
         resources {
           limits = {
-            cpu    = "4000m"
+            cpu    = "8000m"
             memory = "16Gi"
           }
         }

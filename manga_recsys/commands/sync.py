@@ -202,8 +202,6 @@ def upload_gz(overwrite, delete, dry_run, cores):
             "-h",
             "content-encoding:gzip",
             "rsync",
-            "-c",
-            "-i",
             *(["-n"] if dry_run else []),
             *(["-d"] if delete else []),
             "-r",
