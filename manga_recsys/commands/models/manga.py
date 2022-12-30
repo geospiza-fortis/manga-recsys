@@ -135,6 +135,7 @@ def tags_lsi(input_manga_info, output, num_recs, cores, memory):
     default="euclidean",
 )
 @click.option("--deconvolve/--no-deconvolve", default=False)
+@click.option("--solve-k", type=int, default=None)
 @click.option("--laplacian/--no-laplacian", default=True)
 @click.option("--vector-size", type=int, default=256)
 @click.option("--num-recs", type=int, default=20)
@@ -146,6 +147,7 @@ def tags_network(
     metric,
     deconvolve,
     laplacian,
+    solve_k,
     vector_size,
     num_recs,
     cores,
@@ -163,6 +165,7 @@ def tags_network(
         metric=metric,
         vector_size=vector_size,
         low_memory=True,
+        solve_k=solve_k,
     )
 
     print("Exploding recommendations...")

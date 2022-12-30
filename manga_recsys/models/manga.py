@@ -7,15 +7,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyspark.sql
+import scipy.linalg
+import scipy.sparse.linalg
 import umap
 from gensim import corpora
-from gensim.matutils import corpus2csc, corpus2dense
+from gensim.matutils import corpus2dense
 from gensim.models import LsiModel, TfidfModel, Word2Vec
 from pynndescent import NNDescent
 from pyspark.sql import Window
 from pyspark.sql import functions as F
-from scipy.linalg import eig
-from scipy.sparse import csgraph, csr_matrix
+from scipy.sparse import csgraph
 
 
 def get_tag_counts(manga_info: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
@@ -100,20 +101,73 @@ def generate_manga_tags_tfidf_lsi(
         return manga_tags
 
 
-def network_deconvolution(G):
+def network_deconvolution(G, k=None):
     """Deconvolve a network matrix using the eigen decomposition.
-
-    TODO: is is possible to do this with SVD?
-
     https://www.nature.com/articles/nbt.2635
     """
     # eigen decomposition
-    lam, lhs, rhs = eig(G, left=True, right=True)
+    if k:
+        lam, v = scipy.linalg.eigh(G, driver="evr", eigvals=(0, k))
+    else:
+        lam, v = scipy.linalg.eigh(G, driver="evd")
     # rescale the eigenvalues
+    # also add small value to avoid division by zero
     lam_dir = lam / (1 + lam)
     # reconstruct the deconvolved matrix
-    G_deconv = lhs @ np.diag(lam_dir) @ rhs
-    return G_deconv.real
+    G_dir = v @ np.diag(lam_dir) @ v.T
+
+    # remove diagonal, threshold positive values, and rescale in-place
+    np.fill_diagonal(G_dir, 0)
+    np.maximum(G_dir, 0, out=G_dir)
+    G_dir /= np.max(G_dir)
+
+    # NOTE: check reconstruction
+    # G_dir = v @ np.diag(lam) @ v.T
+    return G_dir
+
+
+def network_deconvolution_svd(G, k=None):
+    """Deconvolve a network matrix using svd pseudo-inverse.
+    https://www.nature.com/articles/nbt.2635
+    """
+    if k is not None:
+        u, s, vh = scipy.sparse.linalg.svds(
+            G + np.eye(G.shape[0], dtype=np.float32), k=k, which="SM"
+        )
+    else:
+        u, s, vh = scipy.linalg.svd(G + np.eye(G.shape[0], dtype=np.float32))
+    G_dir = G @ (u @ np.linalg.pinv(np.diag(s)) @ vh)
+
+    # remove diagonal, threshold positive values, and rescale in-place
+    np.fill_diagonal(G_dir, 0)
+    np.maximum(G_dir, 0, out=G_dir)
+    G_dir /= np.max(G_dir)
+
+    return G_dir
+
+
+def network_silencing(G):
+    """Remove indirect effects using a silencing method.
+    https://www.nature.com/articles/nbt.2601
+    """
+    # svd of G
+    u, s, vh = scipy.linalg.svd(G)
+
+    peturb = np.diag((G - np.eye(G.shape[0])) @ G)
+    G_dir = (
+        (G - np.eye(G.shape[0]) + np.diag(peturb))
+        # multiply with pseudo inverse
+        @ (u @ np.linalg.pinv(np.diag(s)) @ vh)
+    )
+
+    # remove diagonal, threshold positive values, and rescale in-place
+    np.fill_diagonal(G_dir, 0)
+    np.maximum(G_dir, 0, out=G_dir)
+    G_dir /= np.max(G_dir)
+
+    # NOTE: check reconstruction
+    # G_dir = u @ np.diag(s) @ vh
+    return G_dir
 
 
 def generate_manga_tags_network(
@@ -121,6 +175,7 @@ def generate_manga_tags_network(
     vector_col: str = "network",
     vector_size: int = 256,
     deconvolve: bool = False,
+    solve_k: int = None,
     laplacian: bool = True,
     metric: str = "cosine",
     **kwargs,
@@ -148,7 +203,10 @@ def generate_manga_tags_network(
         # rescaling. does this pose a problem when computing the laplacian?
         print("deconvolving matrix")
         start = time.time()
-        manga_manga_mat = network_deconvolution(manga_manga_mat)
+        # play around with k to see how it affects the results
+        tmp_deconvolved = network_deconvolution(manga_manga_mat, k=solve_k)
+        del manga_manga_mat
+        manga_manga_mat = tmp_deconvolved
         print(f"deconvolved matrix: {time.time() - start:.2f} seconds")
 
     if laplacian:
