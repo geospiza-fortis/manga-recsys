@@ -1,6 +1,7 @@
 <script>
-    let selected_method = 2;
-    const methods = ["tsne", "pca", "umap"];
+  import TagCounts from "./TagCounts.md";
+  let selected_method = 2;
+  const methods = ["tsne", "pca", "umap"];
 </script>
 
 # manga
@@ -26,15 +27,15 @@ Instead, we focus on content-based models with the potential for personalization
 We can construct three interesting models with tag data alone.
 We treat these as baselines for more complex models.
 These all account for the distributional semantics of tags, but in slightly different ways.
-The first builds on the [word2vec](https://en.wikipedia.org/wiki/Word2vec) model, a neural network that learns to represent words in a vector space.
+The first model is a [latent semantic indexing (LSI)](https://en.wikipedia.org/wiki/Latent_semantic_analysis) model, which uses the singular values of a scaled document-term matrix to project the manga into a low-rank space.
+The second builds on the [word2vec](https://en.wikipedia.org/wiki/Word2vec) model, a neural network that learns to represent words in a vector space.
 We represent each manga by the average of its tag vectors.
 Then we use the cosine similarity between manga vectors to make recommendations.
-The second model is a [latent semantic indexing (LSI)](https://en.wikipedia.org/wiki/Latent_semantic_analysis) model, which uses the singular values of a scaled document-term matrix to project the manga into a low-rank space.
 Again, we recommend the most similar manga based on the cosine similarity of the left singular vector found by the singular value decomposition (SVD).
-The final model performs soft-clustering on a manga-tag bipartite network.
+The final model makes recommendations based on neighbors in the manga-tag bipartite network.
 We count all the possible paths between two manga through shared tags to create a manga-manga network.
 We then recommend the most similar manga based on the number of shared tags.
-To ensure consistency among models, we embed the network onto a manifold using a spectral embedding ([Laplacian Eigenmap](https://www2.imm.dtu.dk/projects/manifold/Papers/Laplacian.pdf)).
+To ensure consistency among models, we embed the network onto a manifold using UMAP with justification on both the adjacency and laplacian matrices.
 
 One immediate extension we can make to these models is to use frequent itemsets as words instead of just tags.
 In other words, we consider all bi-grams, tri-grams, etc. of tags as words.
@@ -43,20 +44,128 @@ One such method is to take the [BERT](https://huggingface.co/docs/transformers/m
 Finally, we can consider adding in popularity or rating statistics to the models.
 These statistics would likely act as a bias term to re-rank recommendations, and would likely require hyper-parameter tuning to be effective.
 
-### embeddings
+### embedding overview
 
-This plot shows the distribution of tags that appear in each manga.
+We will talk about embeddings throughout the rest of this page.
+An embedding is a low-dimensional geometric representation of a high-dimensional space which preserves the relative distances between points.
+These embeddings are metric spaces defined by their embedding e.g. the Euclidean distance or cosine distance.
+The Euclidean distance is the most common metric, and is what you would use to measure the distance between two points in a 2D or 3D space.
+It is also known as the $L^2$ norm, and is defined as:
+
+$$
+d(p, q) = \sqrt{\sum_{i=1}^n (p_i - q_i)^2} = \|p - q\|
+$$
+
+We might instead be interested in the angle between two points.
+This is common with very sparse vectors, where each column of the vector might represent a (normalized) count feature.
+The cosine distance would then reflect the number of common features between two vectors as an angle.
+The cosine distance is defined as the dot product between two points divided by the product of their norms:
+
+$$
+d(p, q)
+  = 1 - \frac{p \cdot q}{\|p\| \|q\|}
+  = \frac{\sum{p_i q_i}}{\sqrt{\sum{p_i^2}} \sqrt{\sum{q_i^2}}}
+$$
+
+We build embeddings because the low-dimensional vector space is much easier to work with and visualize.
+Our recommendation models can simply compare the distance between two points in the embedding space to determine how similar they are.
+We make use of efficient algorithms to find the nearest neighbors to a given point, and can even use the embedding to visualize the data.
+One example that we go into depth later is embedding a network (or graph) into a smaller vector.
+There are 64k manga in the dataset; when represented as an adjacency matrix of (64464, 64464) elements of 32-bit floats it takes up 15.5 GiB of memory.
+We can preserve distances by embedding this into a vector of (64464, 256) elements, which takes up 62 MiB of memory.
+This is several orders of magnitude smaller, while preserving nearest neighbor relationships from the original space.
+
+#### distribution of tags
+
+Our embeddings will focus on tag data.
+These are available for all manga, and is the primary way that users might search for manga.
+All of the embeddings exploit distributional semantics of tags i.e. the meaning of a tag is determined by the tags that appear near it, and the meaning of a manga is determined by the tags that appear on it.
+
+Here we show a histogram often a given tag appears in the dataset.
 
 <img alt="tag count histogram" src="/manga-info/20221221-tag-count-histogram.png">
 
-This plot shows how often a tag appears in the dataset.
+The histogram represents the distribution of tag counts.
+We note that a few tags appear very frequently, while most tags appear very infrequently.
+If we take the log of the tag counts, we can see that the distribution looks more like a normal distribution.
+The raw aggregated data can be found in the following table:
+
+<TagCounts />
+
+We also take a look at how many tags each manga has.
 
 <img alt="tag count per manga histogram" src="/manga-info/20221221-tag-count-per-manga-histogram.png">
 
-#### word2vec
+Like before, we note that the distribution is heavy-tailed, and looks more normal when we take the log of the counts.
+
+### latent semantic indexing (LSI)
+
+[Latent semantic indexing (LSI)](https://nlp.stanford.edu/IR-book/html/htmledition/latent-semantic-indexing-1.html) a traditional information retrieval technique used to find similar documents based on the frequency of words in the documents.
+It indexes into a latent (low-rank, probabilistic) space formed by the [singular value decomposition (SVD)](https://en.wikipedia.org/wiki/Singular_value_decomposition) of a scaled document-term matrix.
+The LSI recommendation model is theoretically sound, and makes a good baseline for comparison.
+
+#### document-term matrix and tf-idf
+
+We generate a term-document matrix $C$ where each row is a manga, and each column is a tag count.
+We normalize the tag counts by [term frequency-inverse document frequency (tf-idf)](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) to account for the fact that some tags appear more frequently than others.
+This helps the relevance of tags that occur rarely, but form a coherent cluster in the data.
+The term frequency is the relative frequency of a term $t$ in a document $d$:
+
+$$
+tf(t, d) = \frac{f_{t, d}}{\sum_{t' \in d} f_{t', d}}
+$$
+
+The inverse document frequency is a measure of how much information a term provides.
+If a term appears in more documents, then it is less informative and is therefore down-weighted.
+
+$$
+idf(t, D) = \log \frac{|D|}{|\{d \in D : t \in d\}|}
+$$
+
+Together, this gives us the tf-idf score:
+
+$$
+tfidf(t, d, D) = tf(t, d) \cdot idf(t, D)
+$$
+
+This is a common weighting scheme that is used in information retrieval systems like [Lucene](https://lucene.apache.org/) and [Elasticsearch](https://www.elastic.co/).
+
+#### indexing and querying with SVD
+
+We could use the tf-idf vector representation of terms to find similar manga.
+However, this representation doesn't take into account the relationships between terms.
+We can use the SVD to find a lower-dimensional representation (latent space) of the data that preserves the relationships between terms.
+This is a type of soft-clustering, where each manga is now represented as a weighted sum of membership in various tag clusters.
+
+SVD decomposes a matrix $M$ into a left singular vector, a diagonal matrix of singular values, and a right singular vector.
+
+$$
+M = U \Sigma V^T
+$$
+
+This is a linear transformation that finds a projection that preserves the largest variance in the data.
+To make a query into the latent space, we first transform a set of tags into a tf-idf query vector $q$.
+We then map this query vector into the latent space by multiplying it by the left singular vector $U$.
+
+$$
+\vec{q_k} = \Sigma_k^{-1} U_k^T \vec{q}
+$$
+
+Then, we just find the nearest neighbors by finding the closest points by cosine distance.
+
+### word2vec embeddings
 
 The word2vec model is a neural network that learns to represent words in a vector space.
-We use `gensim` to train a continuous bag of words (CBOW) model on the tag data.
+We use the word2vec model to represent tags in a vector space.
+We represent each manga as an average of its tag vectors, and use the cosine similarity between manga vectors to make recommendations.
+
+There are two methods for training word2vec models: continuous bag of words (CBOW) and skip-gram.
+The skip-gram model is order-sensitive, and learns the probability of a word given its context.
+This is not ideal for our use case, because tags are not ordered.
+The PySpark implementation of word2vec relies on the skip-gram model, so we use [`gensim` to train a CBOW word2vec model](https://radimrehurek.com/gensim/models/word2vec.html) on the tag data.
+The set of tags on a manga is treated as a sentence in the model.
+We set the embedding size to a vector of size 16, which is justified by the [square root of the number of tags rounded to the nearest power of 2](https://stackoverflow.com/questions/66267818/minimum-number-of-words-in-the-vocabulary-for-word2vec-models).
+We visualize the tag embeddings using [UMAP](https://umap-learn.readthedocs.io/en/latest/).
 
 <img alt="tag word2vec {methods[selected_method]}" src="/manga-info/20221221-tag-word2vec-{methods[selected_method]}.png">
 
@@ -74,23 +183,26 @@ We use `gensim` to train a continuous bag of words (CBOW) model on the tag data.
 {/each}
 </div>
 
-After generating a 16-dimensional word2vec embedding, treating tags on each manga as a sentence, we visualize the tag embeddings using [UMAP](https://umap-learn.readthedocs.io/en/latest/).
 The dimensions are meaningless, but the relative distances between tags are meaningful.
+We see meaningful clusters of tags, such as "isekai", "villianess", "reincarnation", and "fantasy".
 
-#### latent semantic indexing (LSI)
+### network embeddings
 
-The latent semantic indexing (LSI) model is a method for dimensionality reduction.
-It is based on the singular value decomposition (SVD) of a scaled document-term matrix.
+We can also look at recommendations through a network representation.
 
-#### spectral embedding
+#### construction
 
-The spectral embedding model is a method for dimensionality reduction based on network connectivity.
-We use this to reduce the dimensionality of the network, and to ensure that modeling backends are represented using the same API.
+#### removing indirect effects
 
-### network deconvolution
+We explore two techniques to remove indirect effects from the network, as described by [this nature article](https://www.nature.com/articles/nbt.2657) ([scihub link](https://sci-hub.se/10.1038/nbt.2657)).
+These techniques were designed for a gene regulatory network inference task, but can be applied to our network.
+Our network construction is purely indirect, since it relies on paths through tags to connect manga.
+As we introduce derivative tags representing pairs and triplets of tags, we introduce even more indirect effects.
+Therefore, it might be interesting to determine the effects of removing indirect effects from the network.
+
+##### network deconvolution
 
 [Network deconvolution](https://www.nature.com/articles/nbt.2635) is a general method for removing indirect effects from a network.
-We suspect this method will be useful for removing indirect effects from a manga-tag bipartite network.
 We use the following closed form equation to represent the transitive closure over the network.
 
 $$
@@ -102,6 +214,60 @@ The network deconvolution is represented as follows:
 $$
 G_{\text{dir}} = G_{\text{obs}} (I + G_{\text{obs}})^{-1}
 $$
+
+Concretely, we perform the following operation, which rescales the eigenvalues found through the eigen decomposition of the adjacency matrix.
+
+```python
+def network_deconvolution(G):
+    """Deconvolve a network matrix using the eigen decomposition.
+    https://www.nature.com/articles/nbt.2635
+    """
+    # eigen decomposition
+    lam, v = scipy.linalg.eigh(G)
+    # rescale the eigenvalues
+    # also add small value to avoid division by zero
+    lam_dir = lam/(1+lam)
+    # reconstruct the deconvolved matrix
+    G_deconv = v @ np.diag(lam_dir) @ v.T
+
+    np.fill_diagonal(G_deconv, 0)
+    # keep only positive values, in-place
+    np.maximum(G_deconv, 0, out=G_deconv)
+    # rescale between 0 and 1, in-place
+    G_deconv /= np.max(G_deconv)
+
+    # NOTE: check reconstruction
+    # G_deconv = v @ np.diag(lam) @ v.T
+    return G_deconv
+```
+
+We find that finding the naive implementation using scipy's eigen decomposition of the adjacency matrix is _very_ slow.
+We left the deconvolution running for 8 hours and aborted the program due to the intractability.
+We note that there is an alternative reparameterization that uses gradient descent, but this is out of scale for this experiment.
+
+It would be useful to know if we can use the SVD of the adjacency matrix to approximate the deconvolution.
+The eigen decomposition has time complexity $O(n^3)$, while the truncated SVD has time complexity $O(kn^2)$, where $k$ is the number of singular values that we keep.
+Our matrix is fairly dense (50%), so even if we only kept non-zero eigenvalues, we would benefit from the time complexity of the truncated SVD.
+However, we're unsure of the effects of rescaling the singular values instead of the true eigenvalues of the matrix.
+
+##### global silencing of indirect correlations
+
+[Global silencing of indirect correlations](https://www.nature.com/articles/nbt.2601) is another method for removing indirect effects from a network.
+The closed form of the silenced network where indirect effects are removed is given by:
+
+$$
+S = (G - I + \mathcal{D}((G-I)G))G^{-1}
+$$
+
+where $\mathcal{D}$ is an operator that sets diagonal elements to zero.
+
+This is a closed form solution that can be computed relatively quickly given the inverse of the adjacency matrix.
+We can use the psuedo-inverse of the adjacency matrix by computing the truncated SVD of the adjacency matrix.
+
+#### embedding
+
+The spectral embedding model is a method for dimensionality reduction based on network connectivity.
+We use this to reduce the dimensionality of the network, and to ensure that modeling backends are represented using the same API.
 
 ### approximate nearest neighbors
 
@@ -150,6 +316,7 @@ Then when we query the database for similar manga to a query manga, we also aver
 
 - 2022-12-20: Initial version of the manga recommendations page.
 - 2022-12-27: Added reference to network analysis, section on embedding plots
+- 2022-12-29: Filling in more of the details for embeddings and some models.
 
 <style>
 img {
