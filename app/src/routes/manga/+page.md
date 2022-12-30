@@ -192,6 +192,27 @@ We can also look at recommendations through a network representation.
 
 #### construction
 
+We represent our network as matrices.
+We generate a bipartite adjacency matrix $B$ between manga and tags, where each row is a manga, and each column is a tag.
+We project this matrix into a single mode, to get a manga-manga network where two manga are connected by the dot product of their tags.
+
+$$
+A = B B^T
+$$
+
+There are two representations that interest us: the adjacency matrix and the Laplacian matrix.
+The adjacency matrix has a row and column for each manga, where two manga are connected by the number of shared tags.
+The Laplacian matrix is the degree matrix minus the adjacency matrix.
+
+$$
+
+L = D - A
+
+
+$$
+
+The laplacian matrix is related to connectivity of the graph, and is often used for clustering.
+
 #### removing indirect effects
 
 We explore two techniques to remove indirect effects from the network, as described by [this nature article](https://www.nature.com/articles/nbt.2657) ([scihub link](https://sci-hub.se/10.1038/nbt.2657)).
@@ -206,13 +227,19 @@ Therefore, it might be interesting to determine the effects of removing indirect
 We use the following closed form equation to represent the transitive closure over the network.
 
 $$
-G_{\text{obs}} = G_{\text{dir}} (I - G_{\text{dir}})^{-1}
+
+G*{\text{obs}} = G*{\text{dir}} (I - G\_{\text{dir}})^{-1}
+
+
 $$
 
 The network deconvolution is represented as follows:
 
 $$
-G_{\text{dir}} = G_{\text{obs}} (I + G_{\text{obs}})^{-1}
+
+G*{\text{dir}} = G*{\text{obs}} (I + G\_{\text{obs}})^{-1}
+
+
 $$
 
 Concretely, we perform the following operation, which rescales the eigenvalues found through the eigen decomposition of the adjacency matrix.
@@ -228,17 +255,16 @@ def network_deconvolution(G):
     # also add small value to avoid division by zero
     lam_dir = lam/(1+lam)
     # reconstruct the deconvolved matrix
-    G_deconv = v @ np.diag(lam_dir) @ v.T
+    G_dir = v @ np.diag(lam_dir) @ v.T
 
-    np.fill_diagonal(G_deconv, 0)
-    # keep only positive values, in-place
-    np.maximum(G_deconv, 0, out=G_deconv)
-    # rescale between 0 and 1, in-place
-    G_deconv /= np.max(G_deconv)
+    # remove diagonal, threshold positive values, and rescale in-place
+    np.fill_diagonal(G_dir, 0)
+    np.maximum(G_dir, 0, out=G_dir)
+    G_dir /= np.max(G_dir)
 
     # NOTE: check reconstruction
-    # G_deconv = v @ np.diag(lam) @ v.T
-    return G_deconv
+    # G_dir = v @ np.diag(lam) @ v.T
+    return G_dir
 ```
 
 We find that finding the naive implementation using scipy's eigen decomposition of the adjacency matrix is _very_ slow.
@@ -256,13 +282,83 @@ However, we're unsure of the effects of rescaling the singular values instead of
 The closed form of the silenced network where indirect effects are removed is given by:
 
 $$
+
 S = (G - I + \mathcal{D}((G-I)G))G^{-1}
+
+
 $$
 
 where $\mathcal{D}$ is an operator that sets diagonal elements to zero.
 
 This is a closed form solution that can be computed relatively quickly given the inverse of the adjacency matrix.
 We can use the psuedo-inverse of the adjacency matrix by computing the truncated SVD of the adjacency matrix.
+
+```python
+def network_silencing(G):
+    """Remove indirect effects using a silencing method.
+    https://www.nature.com/articles/nbt.2601
+    """
+    # svd of G
+    u, s, vh = scipy.linalg.svd(G)
+
+    peturb = np.diag((G - np.eye(G.shape[0])) @ G)
+    G_dir = (
+        (G - np.eye(G.shape[0]) + np.diag(peturb))
+        # multiply with pseudo inverse
+        @ (u @ np.linalg.pinv(np.diag(s)) @ vh)
+    )
+
+    # remove diagonal, threshold positive values, and rescale in-place
+    np.fill_diagonal(G_dir, 0)
+    np.maximum(G_dir, 0, out=G_dir)
+    G_dir /= np.max(G_dir)
+
+    # NOTE: check reconstruction
+    # G_dir = u @ np.diag(s) @ vh
+    return G_dir
+```
+
+##### comparisons on toy networks
+
+First we take a look at the network on ring, where weights between successive nodes are 1, and weights between non-successive nodes are inversely weighted by the distance between the nodes (plus some random noise to break symmetry).
+
+<div class="network-grid">
+
+![clique original](manga-info/20221229-clique-original.png)
+
+![clique deconvolved](manga-info/20221229-clique-deconvolved.png)
+
+![clique silenced](manga-info/20221229-clique-silenced.png)
+
+</div>
+
+We see that network deconvolution will keep edges with nodes that it shares neighbors with.
+The network silencing instead removes weak edges in the original network.
+
+The semantics of which method is better depends on the construction of the network.
+We take a look at another network, which is a bipartite network that we project onto one mode.
+We treat the two subsets of nodes and manga and tags, where manga are labeled 0-4 and tags labeled 5-7.
+There are `node_id % len(tags)` edges from each manga to each tag, which are weighted by the originating id of the node.
+When we project this, we get a network where each manga is connected to another manga through the number of tags that it shares.
+For example, nodes 2 and 4 share two neighbors, so they are connected by an edge that is the dot product of their edge weights.
+
+<div class="network-grid">
+
+![bipartite original](manga-info/20221229-bipartite-original.png)
+
+![bipartite projected](manga-info/20221229-bipartite-projected.png)
+
+![bipartite deconvolved](manga-info/20221229-bipartite-deconvolved.png)
+
+![bipartite silenced](manga-info/20221229-bipartite-silenced.png)
+
+</div>
+
+We then run network deconvolution and silencing on the projected network.
+We note note that the deconvolution method removes edges going through the most common tags, although the behavior is difficult to intuit.
+The silencing method retains the same structure as the projected network where nodes are connected by edges representing the number of paths between them through tags.
+
+We also note in the context of a fully connected network with equal weights (a clique), the deconvolution method removes all edges while the silencing method retains all edges.
 
 #### embedding
 
@@ -293,7 +389,10 @@ The [Jaccard index](https://en.wikipedia.org/wiki/Jaccard_index) is a measure of
 It is defined as follows:
 
 $$
+
 J(A, B) = \frac{|A \cap B|}{|A \cup B|}
+
+
 $$
 
 #### null model
@@ -330,4 +429,18 @@ img {
   flex-direction: row;
   justify-content: center;
 }
+.network-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/** network grid is 1 column on mobile */
+@media (max-width: 600px) {
+  .network-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
+
+$$
+$$

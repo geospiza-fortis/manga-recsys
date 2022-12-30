@@ -1,4 +1,7 @@
 <script>
+  // import python prismjs css
+  import "prismjs/themes/prism.css";
+
   let entries = ["home", "tag-rules", "groups", "manga", "data", "openapi"];
 </script>
 

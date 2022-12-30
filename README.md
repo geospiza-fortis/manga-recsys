@@ -83,21 +83,14 @@ manga-recsys models manga tags-word2vec data/processed/2022-12-17-metadata-listi
 # second manga recommendations based on tag lsi
 manga-recsys models manga tags-lsi data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-tags-lsi
 
-# recommendation based on tag network using umap and cosine similarity
-manga-recsys models manga tags-network data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-28-recommendation-manga-tags-network-cosine --metric cosine
-
-# wasserstein distance might make more sense
-manga-recsys models manga tags-network data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-28-recommendation-manga-tags-network-wasserstein --metric wasserstein
-
+# see scripts/network_rec_experiments.ps1 for network recommendations
 
 # plots for manga recommendations
 manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-20-recommendation-manga-tags-word2vec/embedding.parquet word2vec data/processed/2022-12-27-recommendation-manga-plots
 
 manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-tags-lsi/embedding.parquet lsi data/processed/2022-12-27-recommendation-manga-plots
 
-manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-28-recommendation-manga-tags-network-cosine/embedding.parquet network-cosine data/processed/2022-12-27-recommendation-manga-plots
-
-manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-28-recommendation-manga-tags-network-wasserstein/embedding.parquet network-wasserstein data/processed/2022-12-27-recommendation-manga-plots
+# see scripts/network_rec_experiments.ps1 for plotting network embeddings
 
 manga-recsys models manga generate-plot-manifest data/processed/2022-12-27-recommendation-manga-plots
 ```

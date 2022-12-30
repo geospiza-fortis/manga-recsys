@@ -28,6 +28,7 @@
   "dependencies": {
     "fuse.js": "^6.6.2",
     "lodash-es": "^4.17.21",
+    "prismjs": "^1.29.0",
     "tabulator-tables": "^5.4.3",
     "tippy.js": "^6.3.7",
     "vis-network": "^9.1.2"

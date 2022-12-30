@@ -1,3 +1,4 @@
+import gc
 import time
 from functools import partial
 from typing import Optional
@@ -8,13 +9,13 @@ import pandas as pd
 import pyspark.sql
 import umap
 from gensim import corpora
-from gensim.matutils import corpus2dense
+from gensim.matutils import corpus2csc, corpus2dense
 from gensim.models import LsiModel, TfidfModel, Word2Vec
 from pynndescent import NNDescent
 from pyspark.sql import Window
 from pyspark.sql import functions as F
 from scipy.linalg import eig
-from scipy.sparse.csgraph import laplacian
+from scipy.sparse import csgraph, csr_matrix
 
 
 def get_tag_counts(manga_info: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
@@ -107,7 +108,7 @@ def network_deconvolution(G):
     https://www.nature.com/articles/nbt.2635
     """
     # eigen decomposition
-    lam, lhs, rhs = eig(G)
+    lam, lhs, rhs = eig(G, left=True, right=True)
     # rescale the eigenvalues
     lam_dir = lam / (1 + lam)
     # reconstruct the deconvolved matrix
@@ -120,10 +121,11 @@ def generate_manga_tags_network(
     vector_col: str = "network",
     vector_size: int = 256,
     deconvolve: bool = False,
+    laplacian: bool = True,
     metric: str = "cosine",
     **kwargs,
 ) -> pd.DataFrame:
-    """Add an averaged wordvector as a feature to the manga_tags dataframe."""
+    """Add an averaged word vector as a feature to the manga_tags dataframe."""
     manga_tags = get_manga_tags(manga_info).toPandas()
 
     # generate the network model using cbow
@@ -133,9 +135,12 @@ def generate_manga_tags_network(
     # time sections
     start = time.time()
     print("generating manga-manga matrix")
-    tag_manga_mat = corpus2dense(corpus, num_terms=len(dictionary)).astype("float32")
+    tag_manga_mat = corpus2dense(corpus, num_terms=len(dictionary), dtype=np.float32)
     manga_manga_mat = tag_manga_mat.T @ tag_manga_mat
+    # if dense
     np.fill_diagonal(manga_manga_mat, 0)
+    # fill diagonal of csc matrix with zeros
+    # manga_manga_mat.setdiag(0)
     print(f"generated manga-manga matrix: {time.time() - start:.2f} seconds")
 
     if deconvolve:
@@ -146,19 +151,35 @@ def generate_manga_tags_network(
         manga_manga_mat = network_deconvolution(manga_manga_mat)
         print(f"deconvolved matrix: {time.time() - start:.2f} seconds")
 
-    print("computing laplacian")
-    start = time.time()
-    laplacian(manga_manga_mat, normed=True, copy=False)
-    print(f"computing laplacian: {time.time() - start:.2f} seconds")
+    if laplacian:
+        print("computing laplacian")
+        start = time.time()
+        csgraph.laplacian(manga_manga_mat, normed=True, copy=False)
+        print(f"computing laplacian: {time.time() - start:.2f} seconds")
+
+    # convert this back into a sparse matrix
+    manga_manga_mat = np.asarray(manga_manga_mat)
+
+    # force garbage collection; does this do anything?
+    gc.collect()
 
     # generate an embedding using umap, which is reasonably fast
+    # we force the output metric to be the same as the input metric, which
+    # makes downstream computations theoretically sound.
     print("generating embedding")
     start = time.time()
     reducer = umap.UMAP(
-        n_components=vector_size, metric=metric, low_memory=True, verbose=True
+        n_components=vector_size,
+        metric=metric,
+        output_metric=metric,
+        low_memory=True,
+        verbose=True,
     )
-    emb = reducer.fit_transform(np.asarray(manga_manga_mat))
+    emb = reducer.fit_transform(manga_manga_mat)
     print(f"generated embedding: {time.time() - start:.2f} seconds")
+
+    # free up some memory before copying the embedding
+    del manga_manga_mat
 
     # add features to the manga_tags dataframe to start making recommendations
     manga_tags[vector_col] = emb.tolist()
@@ -178,13 +199,21 @@ def generate_recommendations(
     k: int = 10,
     metric: int = "cosine",
     n_jobs: int = 8,
+    verbose: bool = True,
+    low_memory: bool = False,
 ) -> pd.DataFrame:
     """Create a new dataframe that contains recommendations using NNDescent.
 
     This will add a recommendations and distances column into a new dataframe.
     """
     # generate an index for nearest neighbor search
-    index = NNDescent(np.stack(df[vector_col]), metric=metric, n_jobs=n_jobs)
+    index = NNDescent(
+        np.stack(df[vector_col]),
+        metric=metric,
+        n_jobs=n_jobs,
+        verbose=verbose,
+        low_memory=low_memory,
+    )
 
     # create recommendations using a mapping to get the original ids
     rec_series = df[vector_col].apply(partial(get_closest, index, df[id_col], k))
