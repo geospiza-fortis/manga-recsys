@@ -1,0 +1,81 @@
+FrequentItemsets:
+  type: array
+  items:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          type: string
+      freq:
+        type: integer
+  example:
+    [
+      { "items": ["Historical", "Long Strip", "Web Comic"], "freq": 819 },
+      { "items": ["Historical", "Long Strip", "Romance"], "freq": 757 }
+    ]
+
+AssociationRules:
+  type: array
+  items:
+    type: object
+    properties:
+      antecedent:
+        type: array
+        items:
+          type: string
+      consequent:
+        type: array
+        items:
+          type: string
+      confidence:
+        type: number
+      lift:
+        type: number
+      support:
+        type: number
+  example:
+    [
+      {
+        "antecedent": ["Long Strip", "Full Color", "Comedy"],
+        "consequent": ["Drama"],
+        "confidence": 0.4057771664,
+        "lift": 1.3330964865,
+        "support": 0.0137285927
+      },
+      {
+        "antecedent": ["Long Strip", "Full Color", "Comedy"],
+        "consequent": ["Romance"],
+        "confidence": 0.6226501605,
+        "lift": 1.5541301717,
+        "support": 0.0210660213
+      }
+    ]
+
+Recommendation:
+  type: array
+  items:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      rec_id:
+        type: string
+        format: uuid
+      rec_name:
+        type: string
+      score:
+        type: number
+  example:
+    [
+      {
+        "id": "a1c7c817-4e59-43b7-9365-09675a149a6f",
+        "name": "One Piece",
+        "rec_id": "fe8376fa-b429-4fff-a236-0374b099a16b",
+        "rec_name": "MONSTERS",
+        "distance": 0.015141048958285164
+      }
+    ]

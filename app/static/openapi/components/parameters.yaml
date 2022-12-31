@@ -1,0 +1,8 @@
+id:
+  name: id
+  in: path
+  required: true
+  schema:
+    type: string
+    format: uuid
+    example: a1c7c817-4e59-43b7-9365-09675a149a6f

@@ -31,14 +31,21 @@ Use [schemathesis](https://github.com/schemathesis/schemathesis) to test the ope
 If you are simply developing against the production service, you can use the following command without any dependencies:
 
 ```bash
-st run --checks all https://manga-recsys.geospiza.me/openapi/openapi.yaml --base-url https://manga-recsys.geospiza.me
+st run --checks all https://manga-recsys.geospiza.me/openapi/openapi.yaml --base-url https://manga-recsys.geospiza.me --hypothesis-phases=explicit
 ```
 
 If you are developing locally, use the following command:
 
 ```bash
-st run --checks all http://localhost:5173/openapi/openapi.yaml --base-url http://localhost:5173
+# for anything with a uuid in it
+st run --checks all http://localhost:5173/openapi/openapi.yaml --base-url http://localhost:5173 --hypothesis-phases=explicit
+
+# everything else
+st run --checks all http://localhost:5173/openapi/openapi.yaml --base-url http://localhost:5173 --tag static
 ```
+
+We use explicit to avoid hypothesis generating too many examples.
+This needs to be configured explicitly, because we can't otherwise test all the paths in one go.
 
 ## notes
 

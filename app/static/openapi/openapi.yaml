@@ -2,27 +2,88 @@ openapi: 3.0.0
 info:
   title: manga-recsys
   description: API routes for recommendation
-  version: 0.8.0
+  version: 0.10.0
 servers:
   - url: https://manga-recsys.geospiza.me
     description: Production instance
-  - url: http://localhost:5173
-    description: Local docker-compose instance
+tags:
+  - name: manga-recommendation
+    description: |
+      Manga recommendations.
+    externalDocs:
+      description: See the manga page for more details.
+      url: ./manga
+  - name: tag-rules
+    description: |
+      Tag rules through association rule mining.
+    externalDocs:
+      description: See the tag-rules page for more details.
+      url: ./tag-rules
+  - name: static
+    description: |
+      Static data.
+      This tag is used for static data that is not updated frequently, and does
+      not require a uuid parameter. This is primarily a tag for testing routes.
 paths:
-  /:
+  /api/v1/models/tag-rules/association_rules.json:
     get:
-      summary: home
+      tags:
+        - tag-rules
+        - static
+      summary: association rules
       responses:
         "200":
           description: OK
           content:
-            text/html; charset=utf-8:
+            application/json:
               schema:
-                type: string
-  /api/v1/models/tag-rules/association_rules.json:
-    get:
-      summary: association rules
+                $ref: "./components/schemas.yaml#/AssociationRules"
   /api/v1/models/tag-rules/freq_itemsets.json:
     get:
+      tags:
+        - tag-rules
+        - static
       summary: frequent itemsets
-  # TODO: metadata, group-manga, manga-tags-word2vec
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./components/schemas.yaml#/FrequentItemsets"
+  /api/v1/models/manga-tags-lsi/recommendations/{id}.json:
+    parameters: &manga-tags-parameters
+      - $ref: "./components/parameters.yaml#/id"
+    get: &manga-tags-recommendations
+      tags:
+        - manga-recommendation
+      summary: manga tags lsi recommendations
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./components/schemas.yaml#/Recommendation"
+        "404":
+          description: Not Found
+  /api/v1/models/manga-tags-word2vec/recommendations/{id}.json:
+    parameters: *manga-tags-parameters
+    get:
+      <<: *manga-tags-recommendations
+      summary: manga tags word2vec recommendations
+  /api/v1/models/manga-tags-network-euclidean/recommendations/{id}.json:
+    parameters: *manga-tags-parameters
+    get:
+      <<: *manga-tags-recommendations
+      summary: manga tags network laplacian with euclidean distance recommendations
+  /api/v1/models/manga-tags-network-cosine/recommendations/{id}.json:
+    parameters: *manga-tags-parameters
+    get:
+      <<: *manga-tags-recommendations
+      summary: manga tags network laplacian with cosine distance recommendations
+  /api/v1/models/manga-tags-network-adj-cosine/recommendations/{id}.json:
+    parameters: *manga-tags-parameters
+    get:
+      <<: *manga-tags-recommendations
+      summary: manga tags network adjacency matrix with cosine distance recommendations
