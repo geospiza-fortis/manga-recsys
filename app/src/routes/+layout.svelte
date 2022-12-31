@@ -12,6 +12,7 @@
         <a href={entry == "home" ? "/" : `/${entry}`}>[{entry}]</a>
         <span />
       {/each}
+      <a href="https://github.com/geospiza-fortis/manga-recsys" target="_blank">[github]</a>
     </div>
     <div>
       <span>build {"__BUILD_TIME__"}</span>
