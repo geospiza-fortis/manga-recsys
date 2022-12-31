@@ -38,8 +38,7 @@
   };
 
   // when hovering over a row, show the tooltip with the group info
-  $: table &&
-    table.on("rowMouseOver", (_, row) => tippyMangaInfo(row, { placement: "bottom" }, "id"));
+  $: table && table.on("rowMouseOver", (_, row) => tippyMangaInfo(row, {}, "id"));
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
   $: table && table.on("rowClick", (_, row) => (selected_id = row.getData().id));
 </script>

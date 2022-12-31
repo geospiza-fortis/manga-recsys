@@ -39,10 +39,14 @@
     ],
     initialSort: [{ column: "distance", dir: "asc" }]
   };
-  $: table &&
-    table.on("rowMouseOver", (_, row) => tippyMangaInfo(row, { placement: "bottom" }, "rec_id"));
+  $: table && table.on("rowMouseOver", (_, row) => tippyMangaInfo(row, {}, "rec_id"));
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
-  $: selected_id && get_manga_recommendation(selected_id, model).then((r) => (data = r));
+  $: selected_id &&
+    get_manga_recommendation(selected_id, model)
+      .then((r) => (data = r))
+      .catch((e) => console.log(e));
 </script>
 
-<Table {data} {options} bind:table />
+{#if data}
+  <Table {data} {options} bind:table />
+{/if}
