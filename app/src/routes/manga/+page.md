@@ -230,7 +230,7 @@ We use the following closed form equation to represent the transitive closure ov
 
 $$
 
-G*{\text{obs}} = G*{\text{dir}} (I - G\_{\text{dir}})^{-1}
+G_{\text{obs}} = G_{\text{dir}} (I - G\_{\text{dir}})^{-1}
 
 
 $$
@@ -239,7 +239,7 @@ The network deconvolution is represented as follows:
 
 $$
 
-G*{\text{dir}} = G*{\text{obs}} (I + G\_{\text{obs}})^{-1}
+G_{\text{dir}} = G_{\text{obs}} (I + G\_{\text{obs}})^{-1}
 
 
 $$
@@ -273,10 +273,11 @@ We find that finding the naive implementation using scipy's eigen decomposition 
 We left the deconvolution running for 8 hours and aborted the program due to the intractability.
 We note that there is an alternative reparameterization that uses gradient descent, but this is out of scale for this experiment.
 
-It would be useful to know if we can use the SVD of the adjacency matrix to approximate the deconvolution.
-The eigen decomposition has time complexity $O(n^3)$, while the truncated SVD has time complexity $O(kn^2)$, where $k$ is the number of singular values that we keep.
-Our matrix is fairly dense (50%), so even if we only kept non-zero eigenvalues, we would benefit from the time complexity of the truncated SVD.
-However, we're unsure of the effects of rescaling the singular values instead of the true eigenvalues of the matrix.
+We can also SVD of the adjacency matrix to find the deconvolution.
+Instead of rescaling the eigenvectors of the eigen-decomposition, we just find the inverse of the matrix through SVD by inverting the $\Sigma$ matrix.
+Both methods have the same big-O complexity of $O(n^3)$.
+
+Truncating the results of the eigen decomposition or SVD leads to unstable results on small toy examples; the effects of approximating the matrix are uncertain in this case.
 
 ##### global silencing of indirect correlations
 
@@ -290,7 +291,7 @@ S = (G - I + \mathcal{D}((G-I)G))G^{-1}
 
 $$
 
-where $\mathcal{D}$ is an operator that sets diagonal elements to zero.
+where $\mathcal{D}$ is an operator that sets everything but the diagonal to zero.
 
 This is a closed form solution that can be computed relatively quickly given the inverse of the adjacency matrix.
 We can use the psuedo-inverse of the adjacency matrix by computing the truncated SVD of the adjacency matrix.
