@@ -1,3 +1,5 @@
+# Script for generating network recommendations and plots
+# These take a while to run...
 # defaults: laplacian embedding with 256 dimensions, euclidean distance, no deconvolution
 
 #--------------------------------------------------------------------------------
@@ -57,26 +59,26 @@ manga-recsys models manga plot-models `
 # network-deconv-euclidean
 #--------------------------------------------------------------------------------
 
-manga-recsys models manga tags-network `
-    data/processed/2022-12-17-metadata-listing/manga_info.parquet `
-    data/processed/2022-12-28-recommendation-manga-tags-network-deconv-euclidean `
-    --metric euclidean --laplacian --deconvolve
+# manga-recsys models manga tags-network `
+#     data/processed/2022-12-17-metadata-listing/manga_info.parquet `
+#     data/processed/2022-12-28-recommendation-manga-tags-network-deconv-euclidean `
+#     --metric euclidean --laplacian --deconvolve
 
-manga-recsys models manga plot-models `
-    data/processed/2022-12-17-metadata-listing/manga_info.parquet `
-    data/processed/2022-12-28-recommendation-manga-tags-network-deconv-euclidean/embedding.parquet `
-    network-deconv-euclidean data/processed/2022-12-27-recommendation-manga-plots
+# manga-recsys models manga plot-models `
+#     data/processed/2022-12-17-metadata-listing/manga_info.parquet `
+#     data/processed/2022-12-28-recommendation-manga-tags-network-deconv-euclidean/embedding.parquet `
+#     network-deconv-euclidean data/processed/2022-12-27-recommendation-manga-plots
 
 #--------------------------------------------------------------------------------
 # network-deconv-adj-cosine
 #--------------------------------------------------------------------------------
 
-manga-recsys models manga tags-network `
-    data/processed/2022-12-17-metadata-listing/manga_info.parquet `
-    data/processed/2022-12-28-recommendation-manga-tags-network-deconv-adj-cosine `
-    --metric cosine --no-laplacian --vector-size 128 --deconvolve
+# manga-recsys models manga tags-network `
+#     data/processed/2022-12-17-metadata-listing/manga_info.parquet `
+#     data/processed/2022-12-28-recommendation-manga-tags-network-deconv-adj-cosine `
+#     --metric cosine --no-laplacian --vector-size 128 --deconvolve
 
-manga-recsys models manga plot-models `
-    data/processed/2022-12-17-metadata-listing/manga_info.parquet `
-    data/processed/2022-12-28-recommendation-manga-tags-network-deconv-adj-cosine/embedding.parquet `
-    network-deconv-adj-cosine data/processed/2022-12-27-recommendation-manga-plots
+# manga-recsys models manga plot-models `
+#     data/processed/2022-12-17-metadata-listing/manga_info.parquet `
+#     data/processed/2022-12-28-recommendation-manga-tags-network-deconv-adj-cosine/embedding.parquet `
+#     network-deconv-adj-cosine data/processed/2022-12-27-recommendation-manga-plots

@@ -116,7 +116,7 @@
   justify-content: center;
 }
 .tag-counts > div {
-  margin: 1em;
+  margin: 0.5em;
 }
 /* split tag counts into two column on mobile */
 @media (max-width: 600px) {
@@ -124,5 +124,13 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.tag-counts table {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+.tag-counts th, .tag-counts td {
+    border: 1px solid black;
 }
 </style>

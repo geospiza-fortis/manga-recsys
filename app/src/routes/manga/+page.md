@@ -28,10 +28,10 @@ We can construct three interesting models with tag data alone.
 We treat these as baselines for more complex models.
 These all account for the distributional semantics of tags, but in slightly different ways.
 The first model is a [latent semantic indexing (LSI)](https://en.wikipedia.org/wiki/Latent_semantic_analysis) model, which uses the singular values of a scaled document-term matrix to project the manga into a low-rank space.
+We recommend the most similar manga based on the cosine similarity of the left singular vector found by the singular value decomposition (SVD).
 The second builds on the [word2vec](https://en.wikipedia.org/wiki/Word2vec) model, a neural network that learns to represent words in a vector space.
 We represent each manga by the average of its tag vectors.
 Then we use the cosine similarity between manga vectors to make recommendations.
-Again, we recommend the most similar manga based on the cosine similarity of the left singular vector found by the singular value decomposition (SVD).
 The final model makes recommendations based on neighbors in the manga-tag bipartite network.
 We count all the possible paths between two manga through shared tags to create a manga-manga network.
 We then recommend the most similar manga based on the number of shared tags.
@@ -220,6 +220,8 @@ These techniques were designed for a gene regulatory network inference task, but
 Our network construction is purely indirect, since it relies on paths through tags to connect manga.
 As we introduce derivative tags representing pairs and triplets of tags, we introduce even more indirect effects.
 Therefore, it might be interesting to determine the effects of removing indirect effects from the network.
+
+Neither of these methods are tractable on the full 64k manga dataset, but it'd be interesting to try this on a smaller subset of the data in the future.
 
 ##### network deconvolution
 
@@ -416,6 +418,7 @@ Then when we query the database for similar manga to a query manga, we also aver
 - 2022-12-20: Initial version of the manga recommendations page.
 - 2022-12-27: Added reference to network analysis, section on embedding plots
 - 2022-12-29: Filling in more of the details for embeddings and some models.
+- 2022-12-30: network cleanup work, final embedding plots
 
 <style>
 img {

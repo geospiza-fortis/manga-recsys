@@ -61,9 +61,7 @@ def _generate_rec(
         # we assume for w2v and lsi that the cosine distance is used implicitly
         "w2v": generate_manga_tags_word2vec,
         "lsi": generate_manga_tags_tfidf_lsi,
-        "network": partial(generate_manga_tags_network, metric=metric),
     }
-
     manga_tags = func[method](manga_info, vector_col="emb", **kwargs)
     print("done generating embeddings")
     rec_df = generate_recommendations(
@@ -72,6 +70,33 @@ def _generate_rec(
         "emb",
         k=num_recs,
         metric=metric,
+        n_jobs=cores,
+        low_memory=low_memory,
+    )
+    print("done generating recommendations")
+    return rec_df
+
+
+def _generate_rec_network(
+    manga_info,
+    cores=8,
+    num_recs=20,
+    metric="cosine",
+    low_memory=False,
+    **kwargs,
+):
+    """embed network into euclidean space using umap."""
+
+    manga_tags = generate_manga_tags_network(
+        manga_info, vector_col="emb", metric=metric, output_metric="euclidean", **kwargs
+    )
+    print("done generating embeddings")
+    rec_df = generate_recommendations(
+        manga_tags,
+        "id",
+        "emb",
+        k=num_recs,
+        metric="euclidean",
         n_jobs=cores,
         low_memory=low_memory,
     )
@@ -156,9 +181,8 @@ def tags_network(
     spark = get_spark(cores=cores, memory=memory)
     manga_info = spark.read.parquet(input_manga_info).cache()
 
-    rec_df = _generate_rec(
+    rec_df = _generate_rec_network(
         manga_info,
-        "network",
         num_recs=num_recs,
         deconvolve=deconvolve,
         laplacian=laplacian,

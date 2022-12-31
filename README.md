@@ -77,20 +77,13 @@ manga-recsys models group-manga data/processed/2022-12-16-mangadex-chapter.parqu
 # log-count rating
 manga-recsys models group-manga data/processed/2022-12-16-mangadex-chapter.parquet data/processed/2022-12-17-metadata-listing/group_manga.parquet data/processed/2022-12-19-recommendation-group-manga
 
-# first manga recommendations based on tag word2vec
-manga-recsys models manga tags-word2vec data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-20-recommendation-manga-tags-word2vec
+# see script/manga_w2v_lsi_rec for w2v and lsi recommendations and plots
 
-# second manga recommendations based on tag lsi
-manga-recsys models manga tags-lsi data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-tags-lsi
+# see scripts/manga_network_rec.ps1 for network recommendations and plots
 
-# see scripts/network_rec_experiments.ps1 for network recommendations
-
-# plots for manga recommendations
-manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-20-recommendation-manga-tags-word2vec/embedding.parquet word2vec data/processed/2022-12-27-recommendation-manga-plots
-
-manga-recsys models manga plot-models data/processed/2022-12-17-metadata-listing/manga_info.parquet data/processed/2022-12-27-recommendation-manga-tags-lsi/embedding.parquet lsi data/processed/2022-12-27-recommendation-manga-plots
-
-# see scripts/network_rec_experiments.ps1 for plotting network embeddings
+# NOTE that network cleanup takes too long for reasonable recommendations, so
+# we don't use this for the entire dataset. Might be interesting to try it on
+# a smaller dataset where we only consider a single genre.
 
 manga-recsys models manga generate-plot-manifest data/processed/2022-12-27-recommendation-manga-plots
 ```
@@ -99,11 +92,16 @@ manga-recsys models manga generate-plot-manifest data/processed/2022-12-27-recom
 
 ```bash
 gcloud --project manga-recsys storage buckets create gs://manga-recsys
+
+# for small static files that are directly downloaded by clients, to help save on bandwidth
 manga-recsys sync tar-gz
 manga-recsys sync upload
-# for small static files that are directly downloaded by clients, to help save on bandwidth
-manga-recsys sync upload-gz
+
+# download files onto the local machine
 manga-recsys sync download
+
+# run the cloud run job for this, since bandwidth/throughput is a lot higher there.
+manga-recsys sync upload-gz
 ```
 
 ### decompressive transcoding

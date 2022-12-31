@@ -8,7 +8,7 @@ os.environ["PYSPARK_PYTHON"] = sys.executable
 os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
 
-def get_spark(cores=8, memory="6g", partitions=64):
+def get_spark(cores=8, memory="6g", partitions=200):
     """Get a spark session for a single driver."""
     return (
         SparkSession.builder.config("spark.driver.memory", memory)

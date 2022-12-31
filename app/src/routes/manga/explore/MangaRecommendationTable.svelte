@@ -4,7 +4,10 @@
 
   async function get_manga_recommendation(uid, model) {
     let resp = await fetch(`/api/v1/models/${model}/recommendations/${uid}.json`);
-    return await resp.json();
+    let data = await resp.json();
+    // add in rank number
+    data.forEach((d, i) => (d.rank = i + 1));
+    return data;
   }
 
   export let selected_id;
@@ -17,6 +20,7 @@
     paginationSize: 10,
     paginationCounter: "rows",
     columns: [
+      { title: "#", field: "rank" },
       {
         title: "recommendation",
         field: "rec_name",

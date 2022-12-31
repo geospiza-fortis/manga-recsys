@@ -178,6 +178,7 @@ def generate_manga_tags_network(
     solve_k: int = None,
     laplacian: bool = True,
     metric: str = "cosine",
+    output_metric: str = "euclidean",
     **kwargs,
 ) -> pd.DataFrame:
     """Add an averaged word vector as a feature to the manga_tags dataframe."""
@@ -229,7 +230,7 @@ def generate_manga_tags_network(
     reducer = umap.UMAP(
         n_components=vector_size,
         metric=metric,
-        output_metric=metric,
+        output_metric=output_metric,
         low_memory=True,
         verbose=True,
     )

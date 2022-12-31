@@ -37,12 +37,31 @@
   let selectedTag = selectedGroup == "genre" ? "Isekai" : "Reincarnation";
   let selectedReducer = "UMAP";
 
+  let visible_plots = [];
+  let column_size = 3;
+
   onMount(async () => {
     manifest = convertManifest(await fetchManifest());
   });
 
+  function mergeModelNames(fixed, manifest) {
+    let manifestModels = manifest ? Object.keys(manifest) : [];
+    let res = [...fixed];
+    for (let model of manifestModels) {
+      if (!res.includes(model)) {
+        res.push(model);
+      }
+    }
+    return res;
+  }
+
   // get the set of models
-  $: models = manifest ? Object.keys(manifest) : [];
+  $: models = mergeModelNames(
+    ["lsi", "word2vec", "network-euclidean", "network-cosine", "network-adj-cosine"],
+    manifest
+  );
+  $: visible_plots = visible_plots.length > 0 ? visible_plots : models.map((_) => true);
+
   // get the set of groups
   $: groups = manifest && models ? Object.keys(manifest[models[0]]) : [];
   // now get the set of tags, which are the same for each model and group
@@ -84,17 +103,37 @@
       </label>
     {/each}
   </div>
+  <!-- radio for visible plots -->
+  <div>
+    {#each models as model, i}
+      <label>
+        <input type="checkbox" bind:checked={visible_plots[i]} />
+        {model}
+      </label>
+    {/each}
+  </div>
+  <!-- radio for number of columns -->
+  <div>
+    {#each [2, 3] as size}
+      <label>
+        <input type="radio" name="column_size" value={size} bind:group={column_size} />
+        {size} columns
+      </label>
+    {/each}
+  </div>
 </div>
 
-<div class="plots">
-  {#each models as model}
-    <div>
-      <h2>{model}</h2>
-      <img
-        src={buildPlotUrl(model, selectedGroup, selectedTag, selectedReducer)}
-        alt="plot of {selectedTag} in {model} using {selectedReducer}"
-      />
-    </div>
+<div class="plots" style="--grid-size:{column_size}">
+  {#each models as model, i}
+    {#if visible_plots[i]}
+      <div>
+        <h2>{model}</h2>
+        <img
+          src={buildPlotUrl(model, selectedGroup, selectedTag, selectedReducer)}
+          alt="plot of {selectedTag} in {model} using {selectedReducer}"
+        />
+      </div>
+    {/if}
   {/each}
 </div>
 
@@ -104,12 +143,13 @@
     border: 1px solid black;
     margin: 1px;
   }
-  /* put the plots in a 2 column grid if the screen is wide enough, adjusting
+
+  /* put the plots in a 3 column grid if the screen is wide enough, adjusting
   the size of the plots to be half width */
   @media (min-width: 600px) {
     .plots {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(var(--grid-size, 2), 1fr);
     }
   }
   .plots img {

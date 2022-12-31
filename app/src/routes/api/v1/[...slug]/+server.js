@@ -37,7 +37,11 @@ const mapping = {
   "models/manga-tags-word2vec": "data/gz/processed/2022-12-20-recommendation-manga-tags-word2vec",
   "models/manga-tags-lsi": "data/gz/processed/2022-12-27-recommendation-manga-tags-lsi",
   "models/manga-tags-network-cosine":
-    "data/gz/processed/2022-12-28-recommendation-manga-tags-network-cosine"
+    "data/gz/processed/2022-12-28-recommendation-manga-tags-network-cosine",
+  "models/manga-tags-network-euclidean":
+    "data/gz/processed/2022-12-28-recommendation-manga-tags-network-euclidean",
+  "models/manga-tags-network-adj-cosine":
+    "data/gz/processed/2022-12-28-recommendation-manga-tags-network-adj-cosine"
 };
 
 export async function GET({ url, params, fetch }) {
