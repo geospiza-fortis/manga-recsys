@@ -28,3 +28,10 @@ repos:
       - id: codespell
         args: [--ignore-words=.dictionary.txt]
         exclude: ^(notebooks|poetry.lock|data)|package-lock.json
+  - repo: local
+    hooks:
+      - id: check-versions
+        name: check package versions
+        entry: python scripts/check_versions.py
+        language: python
+        always_run: true
