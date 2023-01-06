@@ -87,3 +87,20 @@ paths:
     get:
       <<: *manga-tags-recommendations
       summary: manga tags network adjacency matrix with cosine distance recommendations
+  /api/v1/feed/recent:
+    get:
+      tags:
+        - feed
+      summary: fetch recent manga updates
+      description: |
+        Fetches recent manga updates from the MangaDex feed, with caching.
+        Will update once an hour and return the 100 most recent entries.
+        It accepts no parameters.
+        See [the MangaDex Manga documentation](https://api.mangadex.org/docs/redoc.html#tag/Manga/operation/get-search-manga)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object

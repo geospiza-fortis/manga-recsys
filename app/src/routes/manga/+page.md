@@ -11,6 +11,8 @@ Note that this page may take some time to load.
 
 See the [manga embedding plots](/manga/embedding-plots) page for a visualization of the recommendations through the embedding space.
 
+See the [manga feed](/manga/feed) page for a feed of manga from MangaDex that have been re-ranked.
+
 ## notes
 
 ### table of contents
