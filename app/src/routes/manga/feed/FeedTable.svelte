@@ -8,24 +8,66 @@
     library_edits,
     getLibrary,
     addMangaToLibrary,
-    removeMangaFromLibrary
+    removeMangaFromLibrary,
+    fetchTagWordVectors,
+    computeMeanVector,
+    computeTagVector,
+    computeVectorSimilarity
   } from "$lib/personalization.js";
   import { browser } from "$app/environment";
 
   export let data;
   export let paginationSize = 25;
   let processed = [];
+  let library = [];
+
+  function computePersonalVector(data, word_vectors) {
+    if (data.length == 0) return [];
+    if (word_vectors.size == 0) return [];
+    let manga_vectors = data.map((row) =>
+      computeTagVector(
+        row.tags.map((t) => t.name),
+        word_vectors
+      )
+    );
+    return computeMeanVector(manga_vectors);
+  }
 
   async function process(data, _) {
     if (!data) return [];
-    let library = await getLibrary();
+    library = await getLibrary();
+    let word_vectors;
+    let personal_vector;
+    if (library.length == 0) {
+      word_vectors = new Map();
+      personal_vector = [];
+    } else {
+      word_vectors = await fetchTagWordVectors();
+      personal_vector = computePersonalVector(library, word_vectors);
+    }
+    // console.log(personal_vector);
+    // console.log(word_vectors);
+
     let ids = library.map((row) => row.id);
-    return data.map((row) => {
-      return {
-        ...row,
-        inLibrary: ids.includes(row.id)
-      };
-    });
+    return data
+      .filter((row) => row.tags.length > 0)
+      .map((row) => {
+        // compute the vector of the current manga
+        return {
+          ...row,
+          inLibrary: ids.includes(row.id),
+          similarity:
+            personal_vector.length && word_vectors.size
+              ? computeVectorSimilarity(
+                  personal_vector,
+                  computeTagVector(
+                    row.tags.map((t) => t.name),
+                    word_vectors
+                  )
+                )
+              : 0
+        };
+      });
   }
 
   $: browser &&
@@ -39,6 +81,10 @@
     pagination: true,
     paginationSize: paginationSize,
     paginationCounter: "rows",
+    initialSort:
+      library.length > 0
+        ? [{ column: "similarity", dir: "desc" }]
+        : [{ column: "updatedAt", dir: "desc" }],
     columns: [
       // checkbox element that will add or remove manga from the library
       {
@@ -47,6 +93,13 @@
         formatter: "tickCross",
         editor: true,
         hozAlign: "center"
+      },
+      {
+        field: "similarity",
+        title: "sim",
+        // 2 decimal points
+        formatter: (cell) => cell.getValue().toFixed(2),
+        visible: library.length > 0
       },
       {
         field: "updatedAt",
