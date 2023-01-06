@@ -7,22 +7,27 @@
 
   function onLoad() {
     console.log(transform(data));
-    Plotly.newPlot(
-      plotElement,
-      transform(data),
-      merge(
-        {
-          margin: {
-            l: 50,
-            r: 0,
-            b: 50
-          }
-        },
-        layout
-      ),
-      { responsive: true }
-    );
+    try {
+      Plotly.newPlot(
+        plotElement,
+        transform(data),
+        merge(
+          {
+            margin: {
+              l: 50,
+              r: 0,
+              b: 50
+            }
+          },
+          layout
+        ),
+        { responsive: true }
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
+  $: plotElement && data && data.length && onLoad();
 </script>
 
 <svelte:head>
