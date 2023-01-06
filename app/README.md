@@ -11,6 +11,7 @@ Set up a `.env` file with the following variables:
 
 ```bash
 VITE_STATIC_HOST=https://storage.googleapis.com/manga-recsys
+VITE_CACHE_BUCKET=manga-recsys-cache
 # NOTE: http://localhost:4000 for local development with docker compose
 ```
 
