@@ -15,6 +15,8 @@ steps:
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         "--build-arg",
         "VITE_STATIC_HOST=${_VITE_STATIC_HOST}",
+        "--build-arg",
+        "VITE_CACHE_BUCKET=${_VITE_CACHE_BUCKET}",
         "--cache-from",
         "gcr.io/$PROJECT_ID/$REPO_NAME-app:latest",
         ".",
