@@ -8,7 +8,13 @@
 
 # manga feed
 
+We use some of the work on building recommendation systems from tags to re-rank most recent uploads to MangaDex.
+Add manga to your library, and it will sort the 100 most recent uploads to your preferences.
+
 ## personal library
+
+This contains any manga that you have added to your personal library from the feed.
+The chart shows how similar it is to a set of tags.
 
 <div class="personal">
 <div>
@@ -20,6 +26,9 @@
 </div>
 
 ## feed
+
+This feed contains recent manga from MangaDex.
+It updates at most once an hour.
 
 {#if data.feed_data}
 
