@@ -52,8 +52,7 @@
           },
           urlField: "id",
           target: "_blank"
-        },
-        width: 300
+        }
       },
       {
         field: "tags",
@@ -63,7 +62,7 @@
           return rowData.tags.map((tag) => tag.name).join(", ");
         },
         // also set max width
-        width: 200
+        width: 100
       },
       {
         field: "remove",
