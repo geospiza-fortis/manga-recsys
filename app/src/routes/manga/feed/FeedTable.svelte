@@ -4,17 +4,50 @@
   import tippy from "tippy.js";
   import "tippy.js/dist/tippy.css";
   import { DateTime } from "luxon";
+  import {
+    library_edits,
+    getLibrary,
+    addMangaToLibrary,
+    removeMangaFromLibrary
+  } from "$lib/personalization.js";
+  import { browser } from "$app/environment";
 
   export let data;
+  export let paginationSize = 25;
+  let processed = [];
+
+  async function process(data, _) {
+    if (!data) return [];
+    let library = await getLibrary();
+    let ids = library.map((row) => row.id);
+    return data.map((row) => {
+      return {
+        ...row,
+        inLibrary: ids.includes(row.id)
+      };
+    });
+  }
+
+  $: browser &&
+    process(data, $library_edits).then((d) => {
+      processed = d;
+    });
 
   let table;
 
   $: options = {
-    autoColumns: true,
     pagination: true,
-    paginationSize: 50,
+    paginationSize: paginationSize,
     paginationCounter: "rows",
-    autoColumnsDefinitions: [
+    columns: [
+      // checkbox element that will add or remove manga from the library
+      {
+        field: "inLibrary",
+        title: "added",
+        formatter: "tickCross",
+        editor: true,
+        hozAlign: "center"
+      },
       {
         field: "updatedAt",
         title: "updated",
@@ -28,7 +61,6 @@
         field: "originalLanguage",
         title: "lang"
       },
-      { field: "id", visible: false },
       {
         field: "name",
         headerFilter: true,
@@ -59,6 +91,7 @@
       },
       {
         field: "tags",
+        title: "tags",
         // custom formatter to flatten object
         formatter: (cell) => {
           const rowData = cell.getRow().getData();
@@ -70,14 +103,22 @@
       {
         field: "availableTranslatedLanguages",
         title: "translated"
-      },
-      {
-        field: "description",
-        visible: false
       }
     ]
   };
 
+  $: table &&
+    table.on("cellEdited", async (cell) => {
+      const rowData = cell.getRow().getData();
+      let value = rowData.inLibrary;
+      if (value) {
+        await addMangaToLibrary(rowData.id, rowData.name, rowData.tags);
+      } else {
+        await removeMangaFromLibrary(rowData.id);
+      }
+      // also, we need to trigger the component to update
+      $library_edits += 1;
+    });
   // when hovering over a row, show the tooltip with the group info
   $: table &&
     table.on("rowMouseOver", (_, row) => {
@@ -86,4 +127,4 @@
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
 </script>
 
-<Table {data} {options} bind:table />
+<Table data={processed} {options} bind:table />

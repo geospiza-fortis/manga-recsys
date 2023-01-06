@@ -28,6 +28,7 @@
   "dependencies": {
     "@google-cloud/storage": "^6.9.0",
     "fuse.js": "^6.6.2",
+    "localforage": "^1.10.0",
     "lodash-es": "^4.17.21",
     "luxon": "^3.2.1",
     "prismjs": "^1.29.0",
