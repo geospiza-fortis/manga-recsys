@@ -40,6 +40,14 @@ resource "google_storage_bucket" "default" {
   }
 }
 
+// make a non-public bucket that we use for caching static files; we can remove
+// files after a while; we also don't need cors headers
+resource "google_storage_bucket" "cache" {
+  name                        = "${local.repo_name}-cache"
+  location                    = "US"
+  uniform_bucket_level_access = true
+}
+
 resource "google_storage_bucket_iam_member" "default-public" {
   bucket = google_storage_bucket.default.name
   role   = "roles/storage.objectViewer"
@@ -84,6 +92,7 @@ resource "google_cloudbuild_trigger" "github" {
   substitutions = {
     _REGION           = local.region
     _VITE_STATIC_HOST = "https://storage.googleapis.com/${google_storage_bucket.default.name}"
+    _VITE_CACHE_HOST  = google_storage_bucket.cache.name
   }
   filename        = "cloudbuild.yaml"
   service_account = google_service_account.cloudbuild.id
