@@ -90,9 +90,9 @@ resource "google_cloudbuild_trigger" "github" {
     }
   }
   substitutions = {
-    _REGION           = local.region
-    _VITE_STATIC_HOST = "https://storage.googleapis.com/${google_storage_bucket.default.name}"
-    _VITE_CACHE_HOST  = google_storage_bucket.cache.name
+    _REGION            = local.region
+    _VITE_STATIC_HOST  = "https://storage.googleapis.com/${google_storage_bucket.default.name}"
+    _VITE_CACHE_BUCKET = google_storage_bucket.cache.name
   }
   filename        = "cloudbuild.yaml"
   service_account = google_service_account.cloudbuild.id
