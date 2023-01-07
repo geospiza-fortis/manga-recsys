@@ -3,6 +3,7 @@
   import PersonalLibraryTable from "$lib/PersonalLibraryTable.svelte";
   import PersonalLibraryChart from "$lib/PersonalLibraryChart.svelte";
   import PolarChart from "$lib/PolarChart.svelte";
+  import { DateTime } from "luxon";
 
   export let data;
   let rowData;
@@ -11,6 +12,8 @@
   let shared_layout = {
     height: 400
   };
+
+  let feedPaginationSize = 10;
 </script>
 
 <h1>manga feed</h1>
@@ -21,6 +24,34 @@
   your preferences.
 </p>
 
+<h2>feed</h2>
+
+<p>
+  This feed contains recent manga from MangaDex that have a chapter available and has been
+  translated into English. It updates at most once every five minutes. Click on a row to compare it
+  to your library. The most recent upload was {DateTime.fromISO(
+    data.feed_data[0].updatedAt
+  ).toRelative()} and the oldest was {DateTime.fromISO(
+    data.feed_data[data.feed_data.length - 1].updatedAt
+  ).toRelative()}.
+</p>
+
+{#if data.feed_data}
+  <FeedTable
+    data={data.feed_data}
+    click={(row) => (rowData = row.getData())}
+    paginationSize={feedPaginationSize}
+  />
+  <div>
+    <!-- pagination options [10, 25, 50] as radio -->
+    <b>pagination</b>
+    {#each [10, 25, 50] as size}
+      <input type="radio" name="pagination" value={size} bind:group={feedPaginationSize} />
+      <label for={size}>{size}</label>
+    {/each}
+  </div>
+{/if}
+
 <h2>personal library</h2>
 
 <p>
@@ -29,6 +60,10 @@
 </p>
 
 <PersonalLibraryTable paginationSize={10} />
+
+{#if !rowData}
+  <p>Click on a row from the feed to compare.</p>
+{/if}
 
 <div class="plots" style="--grid-size={rowData ? 2 : 1}">
   <PersonalLibraryChart
@@ -48,20 +83,6 @@
     />
   {/if}
 </div>
-
-<h2>feed</h2>
-
-<p>
-  This feed contains recent manga from MangaDex that have a chapter available and has been
-  translated into English. It updates at most once every five minutes. Click on a row to compare it
-  to your library.
-</p>
-
-{#if data.feed_data}
-  <div>
-    <FeedTable data={data.feed_data} click={(row) => (rowData = row.getData())} />
-  </div>
-{/if}
 
 <style>
   /** grid the plots side by side if the page is large enough */
