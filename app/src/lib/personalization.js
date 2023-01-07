@@ -37,6 +37,12 @@ async function fetchTagWordVectors() {
   return new Map(Object.entries(data["emb"]));
 }
 
+async function fetchSortedTags(metric = "hyperboloid") {
+  let resp = await fetch(`/api/v1/models/manga-tags-word2vec/tags-${metric}.json?server=true`);
+  let data = await resp.json();
+  return data;
+}
+
 function computeMeanVector(vectors) {
   return mean(vectors, 0);
 }
@@ -62,6 +68,7 @@ export {
   addMangaToLibrary,
   removeMangaFromLibrary,
   fetchTagWordVectors,
+  fetchSortedTags,
   computeMeanVector,
   computeTagVector,
   computeVectorSimilarity

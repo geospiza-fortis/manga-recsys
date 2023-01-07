@@ -6,7 +6,7 @@
   let plotElement;
 
   function onLoad() {
-    console.log(transform(data));
+    // console.log(transform(data));
     try {
       Plotly.newPlot(
         plotElement,

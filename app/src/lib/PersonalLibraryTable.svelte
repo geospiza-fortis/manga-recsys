@@ -69,18 +69,16 @@
         title: "remove",
         formatter: "tickCross",
         hozAlign: "center",
-        editor: true
+        editor: false,
+        cellClick: async (_, cell) => {
+          const rowData = cell.getRow().getData();
+          await removeMangaFromLibrary(rowData.id);
+          // also, we need to trigger the component to update
+          $library_edits += 1;
+        }
       }
     ]
   };
-
-  $: table &&
-    table.on("cellEdited", async (cell) => {
-      const rowData = cell.getRow().getData();
-      await removeMangaFromLibrary(rowData.id);
-      // also, we need to trigger the component to update
-      $library_edits += 1;
-    });
   // when hovering over a row, show the tooltip with the group info
   $: table && table.on("rowMouseOver", (_, row) => tippyMangaInfo(row, {}, "id"));
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
