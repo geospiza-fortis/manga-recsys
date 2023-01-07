@@ -7,8 +7,9 @@
 
   export let data = [];
 
-  let group = "genre";
-  let min_support_step = 0.0;
+  export let group = "genre";
+  export let min_support_step = 0.0;
+  export let layout = {};
   let min_support = 0.0;
   let ignore_tags = [];
 
@@ -29,8 +30,8 @@
 
 <!-- add radio options to change the group between genre, theme, and format -->
 
-<div>
-  <PolarChart {ref_tags} {group} {min_support_step} {ignore_tags} bind:min_support />
+<div class="container">
+  <PolarChart {ref_tags} {group} {min_support_step} {ignore_tags} {layout} bind:min_support />
   <div class="options">
     {#each ["genre", "theme", "format"] as g}
       <input type="radio" name="group" value={g} bind:group />
@@ -53,6 +54,9 @@
 </div>
 
 <style>
+  .container {
+    justify-content: center;
+  }
   .options {
     display: flex;
     flex-direction: row;

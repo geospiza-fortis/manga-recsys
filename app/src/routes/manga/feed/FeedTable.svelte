@@ -17,6 +17,7 @@
   import { browser } from "$app/environment";
   import { marked } from "marked";
 
+  export let click = (_) => {};
   export let data;
   export let paginationSize = 25;
   let processed = [];
@@ -182,6 +183,7 @@
       });
     });
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
+  $: table && table.on("rowClick", (_, row) => click(row));
 </script>
 
 <Table data={processed} {options} bind:table />
