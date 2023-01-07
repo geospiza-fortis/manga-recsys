@@ -73,24 +73,34 @@
   $: tag_vectors = computeTagGroupVectors(tags, word_vectors);
   $: similarities = computeSimilarities(personal_vector, tag_vectors);
 
-  //   $: console.log(tag_vectors);
-
-  function transformPolar(data) {
+  function transformPolar(data, norm = false, log = false) {
     // all elements sum to 1
-    let sum = data.reduce((a, b) => a + b, 0);
-    let normed = data.map((d) => d / sum);
-    normed = data;
+    let x = data;
+    if (norm) {
+      let sum = x.reduce((a, b) => a + b, 0);
+      x = x.map((d) => d / sum);
+    }
+    if (log) {
+      x = x.map((d) => Math.log(d + 1));
+    }
     return [
       {
-        r: [...normed, normed[0]],
+        r: [...x, x[0]],
         theta: [...tags, tags[0]].map((t) => t.join(", ")),
         type: "scatterpolargl",
         fill: "toself"
       }
     ];
   }
+
   $: layout = {
-    title: `Personal Library, similarity to ${group} tags`
+    title: `Personal Library, similarity to ${group} tags`,
+    // make the polar plot go to 1
+    polar: {
+      radialaxis: {
+        range: [-1, 1]
+      }
+    }
   };
 </script>
 

@@ -15,6 +15,7 @@
     computeVectorSimilarity
   } from "$lib/personalization.js";
   import { browser } from "$app/environment";
+  import { marked } from "marked";
 
   export let data;
   export let paginationSize = 25;
@@ -45,8 +46,6 @@
       word_vectors = await fetchTagWordVectors();
       personal_vector = computePersonalVector(library, word_vectors);
     }
-    // console.log(personal_vector);
-    // console.log(word_vectors);
 
     let ids = library.map((row) => row.id);
     return data
@@ -175,7 +174,10 @@
   // when hovering over a row, show the tooltip with the group info
   $: table &&
     table.on("rowMouseOver", (_, row) => {
-      tippy(row.getElement(), { content: row.getData().description });
+      tippy(row.getElement(), {
+        content: marked(row.getData().description),
+        allowHTML: true
+      });
     });
   $: table && table.on("rowMouseOut", (_, row) => destroyTippy(row));
 </script>
