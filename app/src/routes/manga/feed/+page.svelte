@@ -53,7 +53,8 @@
 
 <p>
   This feed contains recent manga from MangaDex that have a chapter available and has been
-  translated into English. It updates at most once every five minutes.
+  translated into English. It updates at most once every five minutes. Click on a row to compare it
+  to your library.
 </p>
 
 {#if data.feed_data}

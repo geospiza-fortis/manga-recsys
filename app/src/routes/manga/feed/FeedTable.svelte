@@ -91,8 +91,20 @@
         field: "inLibrary",
         title: "added",
         formatter: "tickCross",
-        editor: true,
-        hozAlign: "center"
+        hozAlign: "center",
+        cellClick: async (_, cell) => {
+          cell.setValue(!cell.getValue());
+
+          const rowData = cell.getRow().getData();
+          let value = rowData.inLibrary;
+          if (value) {
+            await addMangaToLibrary(rowData.id, rowData.name, rowData.tags);
+          } else {
+            await removeMangaFromLibrary(rowData.id);
+          }
+          // also, we need to trigger the component to update
+          $library_edits += 1;
+        }
       },
       {
         field: "similarity",
@@ -111,10 +123,6 @@
         }
       },
       {
-        field: "originalLanguage",
-        title: "lang"
-      },
-      {
         field: "name",
         headerFilter: true,
         // no-op function since we're going to filter the data ourselves
@@ -130,7 +138,7 @@
           urlField: "id",
           target: "_blank"
         },
-        width: 300
+        width: 200
       },
       {
         field: "latestUploadedChapter",
@@ -154,24 +162,16 @@
         width: 200
       },
       {
+        field: "originalLanguage",
+        title: "lang"
+      },
+      {
         field: "availableTranslatedLanguages",
         title: "translated"
       }
     ]
   };
 
-  $: table &&
-    table.on("cellEdited", async (cell) => {
-      const rowData = cell.getRow().getData();
-      let value = rowData.inLibrary;
-      if (value) {
-        await addMangaToLibrary(rowData.id, rowData.name, rowData.tags);
-      } else {
-        await removeMangaFromLibrary(rowData.id);
-      }
-      // also, we need to trigger the component to update
-      $library_edits += 1;
-    });
   // when hovering over a row, show the tooltip with the group info
   $: table &&
     table.on("rowMouseOver", (_, row) => {

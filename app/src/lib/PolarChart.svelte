@@ -16,6 +16,7 @@
   export let min_support_step = 0.0;
   export let ignore_tags = [];
   export let layout = {};
+  export let show_negative = true;
 
   export let min_support = 0.0;
 
@@ -84,7 +85,7 @@
     // make the polar plot go to 1
     polar: {
       radialaxis: {
-        range: [-1, 1]
+        range: show_negative ? [-1, 1] : [0, 1]
       }
     },
     ...layout
