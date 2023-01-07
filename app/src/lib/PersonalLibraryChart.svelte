@@ -5,6 +5,7 @@
     library_edits,
     getLibrary,
     fetchTagWordVectors,
+    fetchSortedTags,
     computeMeanVector,
     computeTagVector,
     computeVectorSimilarity
@@ -13,11 +14,16 @@
   import Plot from "$lib/Plot.svelte";
 
   export let data = [];
-  let tags = [["Romance"], ["Drama"], ["Adventure"], ["Fantasy"], ["Sports"]];
+  let sorted_tags = [];
+  let group = "genre";
+  let min_support = 0.001;
+  let ignore_tags = [];
   let word_vectors = new Map();
+
   onMount(async () => {
     data = await getLibrary();
     word_vectors = await fetchTagWordVectors();
+    sorted_tags = await fetchSortedTags("euclidean");
     $library_edits += 1;
   });
 
@@ -27,6 +33,7 @@
       data = library;
       $library_edits = 0;
     });
+
   function computePersonalVector(data, word_vectors) {
     if (data.length == 0) return [];
     if (word_vectors.size == 0) return [];
@@ -39,15 +46,28 @@
     return computeMeanVector(manga_vectors);
   }
 
+  function computeTagGroupVectors(tags, word_vectors) {
+    if (tags.length == 0) return [];
+    if (word_vectors.size == 0) return [];
+    return tags.map((tag) => computeTagVector(tag, word_vectors));
+  }
+
   function computeSimilarities(personal_vector, tag_vectors) {
     if (personal_vector.length == 0) return [];
     if (tag_vectors.length == 0) return [];
     return tag_vectors.map((tag_vector) => computeVectorSimilarity(personal_vector, tag_vector));
   }
+
   $: personal_vector = computePersonalVector(data, word_vectors);
-  $: tag_vectors =
-    word_vectors.size > 0 ? tags.map((tag) => computeTagVector(tag, word_vectors)) : [];
+  $: tags = sorted_tags
+    .filter(
+      (tag) => tag.group == group && tag.support > min_support && !ignore_tags.includes(tag.name)
+    )
+    .map((tag) => [tag.name]);
+  $: tag_vectors = computeTagGroupVectors(tags, word_vectors);
   $: similarities = computeSimilarities(personal_vector, tag_vectors);
+
+  $: console.log(tag_vectors);
 
   function transformPolar(data) {
     // all elements sum to 1
@@ -63,7 +83,7 @@
     ];
   }
   $: layout = {
-    title: "Personal Library, Similarity to Tags"
+    title: `Personal Library, similarity to ${group} tags`
   };
 </script>
 
