@@ -14,10 +14,12 @@
   import Plot from "$lib/Plot.svelte";
 
   export let data = [];
+
   let sorted_tags = [];
   let group = "genre";
-  let min_support = 0.001;
+  let min_support_step = 0.0;
   let ignore_tags = [];
+
   let word_vectors = new Map();
 
   onMount(async () => {
@@ -59,20 +61,25 @@
   }
 
   $: personal_vector = computePersonalVector(data, word_vectors);
-  $: tags = sorted_tags
-    .filter(
-      (tag) => tag.group == group && tag.support > min_support && !ignore_tags.includes(tag.name)
-    )
-    .map((tag) => [tag.name]);
+  $: group_tags = sorted_tags.filter(
+    (tag) => tag.group == group && !ignore_tags.includes(tag.name)
+  );
+  $: range_support_min = Math.min(...group_tags.map((t) => t.support));
+  $: range_support_max = Math.max(...group_tags.map((t) => t.support));
+  // map min_support_step between min and max, but on a log scale
+  $: min_support = min_support_step * (range_support_max - range_support_min) + range_support_min;
+  $: min_support = Math.min(min_support, range_support_max);
+  $: tags = group_tags.filter((tag) => tag.support > min_support).map((tag) => [tag.name]);
   $: tag_vectors = computeTagGroupVectors(tags, word_vectors);
   $: similarities = computeSimilarities(personal_vector, tag_vectors);
 
-  $: console.log(tag_vectors);
+  //   $: console.log(tag_vectors);
 
   function transformPolar(data) {
     // all elements sum to 1
     let sum = data.reduce((a, b) => a + b, 0);
     let normed = data.map((d) => d / sum);
+    normed = data;
     return [
       {
         r: [...normed, normed[0]],
@@ -87,6 +94,38 @@
   };
 </script>
 
-{#if similarities && similarities.length > 0}
-  <Plot data={similarities} transform={transformPolar} {layout} />
-{/if}
+<!-- add radio options to change the group between genre, theme, and format -->
+
+<div>
+  {#if similarities && similarities.length > 0}
+    <Plot data={similarities} transform={transformPolar} {layout} />
+  {/if}
+  <div class="options">
+    {#each ["genre", "theme", "format"] as g}
+      <input type="radio" name="group" value={g} bind:group />
+      <label for={g}>{g}</label>
+    {/each}
+  </div>
+  <div class="options">
+    <!-- slider for min_support -->
+    <label for="min_support">min support</label>
+    <input
+      type="range"
+      name="min_support"
+      min={0.0}
+      max={0.99}
+      step={0.01}
+      bind:value={min_support_step}
+    />
+    {min_support.toFixed(4)}
+  </div>
+</div>
+
+<style>
+  .options {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
