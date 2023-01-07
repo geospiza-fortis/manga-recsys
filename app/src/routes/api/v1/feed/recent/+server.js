@@ -10,7 +10,14 @@ import { Storage } from "@google-cloud/storage";
 import { error, json } from "@sveltejs/kit";
 
 const fetchMostRecentManga = async (fetch, limit = 100) => {
-  let url = `https://api.mangadex.org/manga?&order[updatedAt]=desc&limit=${limit}`;
+  let params = new URLSearchParams();
+  params.append("order[updatedAt]", "desc");
+  params.append("hasAvailableChapters", true);
+  // must have a translation in english
+  params.append("availableTranslatedLanguage[]", "en");
+  params.append("limit", limit);
+  let url = `https://api.mangadex.org/manga?${params.toString()}`;
+  console.log(`Fetching ${url}`);
   let resp = await fetch(url);
   return await resp.json();
 };
@@ -18,9 +25,9 @@ const fetchMostRecentManga = async (fetch, limit = 100) => {
 export async function GET({ fetch }) {
   const limit = 100;
   // first lets check if we have a cached version of the response
-  // get a date string YYYY-MM-DDTHH:00 rounded to the current hour
+  // get a date string YYYY-MM-DDTHH:00 rounded to the current 5 minute interval
   let date = new Date();
-  date.setMinutes(0);
+  date.setMinutes(Math.floor(date.getMinutes() / 5) * 5);
   date.setSeconds(0);
   date.setMilliseconds(0);
   let dateStr = date.toISOString().slice(0, 16);

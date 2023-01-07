@@ -27,8 +27,8 @@ The chart shows how similar it is to a set of tags.
 
 ## feed
 
-This feed contains recent manga from MangaDex.
-It updates at most once an hour.
+This feed contains recent manga from MangaDex that have a chapter available and has been translated into English.
+It updates at most once every five minutes.
 
 {#if data.feed_data}
 

@@ -174,8 +174,10 @@
   // when hovering over a row, show the tooltip with the group info
   $: table &&
     table.on("rowMouseOver", (_, row) => {
+      let description = row.getData().description;
+      if (!description) return;
       tippy(row.getElement(), {
-        content: marked(row.getData().description),
+        content: marked(description),
         allowHTML: true
       });
     });
